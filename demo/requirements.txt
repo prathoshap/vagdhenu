@@ -1,17 +1,21 @@
-# Hugging Face ZeroGPU Space deps. gradio is provided by the Space SDK (see README.md header).
-# torch pinned to 2.8.0 because ZeroGPU only supports torch >= 2.8 (2.8.0/2.9.1/2.10.0/2.11.0);
-# the local-install env (repo-root requirements.txt) stays on the validated torch 2.4.1.
+# Hugging Face ZeroGPU Space deps. gradio comes from the Space SDK (see README.md header).
+# torch pinned to 2.8.0 because ZeroGPU requires torch >= 2.8 (the local-install env stays on the
+# validated torch 2.4.1). f5_tts is IndicF5's OWN variant (Indic fork of F5-TTS) installed from its
+# public GitHub at the exact commit used in production — NOT the unrelated PyPI `f5-tts` (whose
+# infer_process differs and crashes). Support libs pinned to the validated stack; numpy<=1.26.4 is
+# required by IndicF5.
 spaces
 torch==2.8.0
 torchaudio==2.8.0
-f5-tts
+git+https://github.com/ai4bharat/IndicF5.git@13f7c4d627cc10111aea8fe9c0039462cacacdc7
 transformers==4.46.3
 accelerate==0.34.2
+vocos==0.1.0
+x-transformers==2.19.7
+numpy==1.26.4
 librosa==0.11.0
-soundfile
-numpy
 scipy
+soundfile
 huggingface_hub
 indic-transliteration
-# NVIDIA BigVGAN is NOT a pip package (no setup.py) — app.py clones it at startup and adds it to
-# sys.path; we use the torch (non-CUDA-kernel) path so nothing needs compiling.
+# NVIDIA BigVGAN is not a pip package — app.py clones it at startup and adds it to sys.path.

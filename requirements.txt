@@ -1,11 +1,15 @@
 # Python 3.10. Install torch separately with CUDA (see scripts/setup.sh), then: pip install -r requirements.txt
-f5-tts
+# f5_tts is IndicF5's own variant (Indic fork of F5-TTS), installed from its public GitHub at the exact
+# commit used in production — NOT the PyPI `f5-tts` package (different code; its infer_process crashes).
+git+https://github.com/ai4bharat/IndicF5.git@13f7c4d627cc10111aea8fe9c0039462cacacdc7
 transformers==4.46.3
 accelerate==0.34.2
+vocos==0.1.0
+x-transformers==2.19.7
+numpy==1.26.4
 librosa==0.11.0
 soundfile
-numpy
 huggingface_hub
 indic-transliteration
-# bigvgan: NVIDIA's package, installed from git in scripts/setup.sh (not on PyPI)
-# torch==2.4.1 torchaudio==2.4.1 (+cu121): installed in scripts/setup.sh
+# bigvgan: NVIDIA's repo, cloned in scripts/setup.sh (not a pip package)
+# torch==2.4.1 torchaudio==2.4.1 (+cu121): installed in scripts/setup.sh (validated version)
