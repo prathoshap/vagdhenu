@@ -1,0 +1,13 @@
+# Hugging Face ZeroGPU Space deps. gradio is provided by the Space SDK (see README.md header).
+spaces
+torch==2.4.1
+torchaudio==2.4.1
+f5-tts
+transformers==4.46.3
+accelerate==0.34.2
+librosa==0.11.0
+soundfile
+numpy
+huggingface_hub
+indic-transliteration
+git+https://github.com/NVIDIA/BigVGAN.git

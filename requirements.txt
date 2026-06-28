@@ -1,0 +1,11 @@
+# Python 3.10. Install torch separately with CUDA (see scripts/setup.sh), then: pip install -r requirements.txt
+f5-tts
+transformers==4.46.3
+accelerate==0.34.2
+librosa==0.11.0
+soundfile
+numpy
+huggingface_hub
+indic-transliteration
+# bigvgan: NVIDIA's package, installed from git in scripts/setup.sh (not on PyPI)
+# torch==2.4.1 torchaudio==2.4.1 (+cu121): installed in scripts/setup.sh

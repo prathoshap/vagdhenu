@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pt
+*.pth
+*.safetensors
+*.wav
+*.mp4
+*.m4a
+!examples/**/*.wav
+.DS_Store
+.venv/
+!src/reference_bank/*.wav

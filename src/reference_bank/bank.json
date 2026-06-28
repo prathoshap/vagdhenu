@@ -1,0 +1,226 @@
+{
+  "_doc": "Per-vṛtta reference bank for F5 chant TTS production. ref_text matches the audio in wav EXACTLY (half-reference rule). mode: 'half' = cut to one hemistich; 'full' = whole recorded clip. Use with render.sh: --ref_wav <wav> --ref_text_file <ref_text> --padas <verse>.",
+  "anuṣṭubh": {
+    "wav": "anushtubh.wav",
+    "clip_id": "ds__a8414118",
+    "mode": "half",
+    "dur_s": 4.73,
+    "sr": 24000,
+    "hnr": 18.9,
+    "sec_per_syll": 0.326,
+    "ref_text": "सन्ततं चिन्तयेत् कण्ठं भास्वत्कौस्तुभभासकम्",
+    "full_verse": "सन्ततं चिन्तयेत् कण्ठं भास्वत्कौस्तुभभासकम् । वैकुण्ठस्याखिला वेदा उद्गीर्यन्तेऽनिशं यतः ॥"
+  },
+  "pramāṇikā": {
+    "wav": "pramanika.wav",
+    "clip_id": "mbtn7__d5aa7417",
+    "mode": "half",
+    "dur_s": 4.0,
+    "sr": 24000,
+    "hnr": 19.3,
+    "ref_text": "अशीतिकोटियूथपं पुरःसराष्टकायुतम्",
+    "full_verse": "अशीतिकोटियूथपं पुरःसराष्टकायुतम्। अनेकहेतिसङ्कुलं कपीन्द्रमावृणोद् बलम्॥",
+    "sec_per_syll": 0.275
+  },
+  "vasantatilakā": {
+    "wav": "vasantatilaka.wav",
+    "clip_id": "mbtn6__5d96ef15",
+    "mode": "half",
+    "dur_s": 6.6,
+    "sr": 24000,
+    "hnr": 18.6,
+    "ref_text": "तेनोदितोऽथ सुदृढं पुनरागतेन वज्रोपमं शरममूमुचदिन्द्रसूनौ",
+    "full_verse": "तेनोदितोऽथ सुदृढं पुनरागतेन वज्रोपमं शरममूमुचदिन्द्रसूनौ ॥ ६/१७॥ रामाज्ञयैव लतया रविजे विभक्ते वायोः सुतेन रघुपेण शरे प्रमुक्ते।",
+    "sec_per_syll": 0.259
+  },
+  "upajāti": {
+    "wav": "upajati.wav",
+    "clip_id": "sumadhwa__1_50",
+    "mode": "half",
+    "dur_s": 5.46,
+    "sr": 24000,
+    "hnr": 19.0,
+    "ref_text": "अवैदिकं माध्यमिकं निरस्तं निरीक्ष्य तत्पक्षसुपक्षपाती",
+    "full_verse": "अवैदिकं माध्यमिकं निरस्तं निरीक्ष्य तत्पक्षसुपक्षपाती । तमेव पक्षं प्रतिपादुकोऽसौ न्यरूरुपन्मार्गमिहानुरूपम् ॥",
+    "sec_per_syll": 0.273
+  },
+  "indravajrā": {
+    "wav": "indravajra.wav",
+    "clip_id": "mbtn6__5e7d070e",
+    "mode": "half",
+    "dur_s": 5.2,
+    "sr": 24000,
+    "hnr": 18.7,
+    "ref_text": "विज्ञातमेतद्धि मयाऽङ्गदस्य राज्याय ताराभिहितं हि वाक्यम्",
+    "full_verse": "विज्ञातमेतद्धि मयाऽङ्गदस्य राज्याय ताराभिहितं हि वाक्यम्। साध्यं नचैतन्नहि वायुसूनू रामप्रतीपं वचनं सहेत॥",
+    "sec_per_syll": 0.26
+  },
+  "upendravajrā": {
+    "wav": "upendravajra.wav",
+    "clip_id": "mbtn4__a237987e",
+    "mode": "half",
+    "dur_s": 5.38,
+    "sr": 24000,
+    "hnr": 18.7,
+    "ref_text": "निरीक्ष्य नित्यं चतुरः कुमारान् पिता मुदं सन्ततमाप चोच्चम्",
+    "full_verse": "निरीक्ष्य नित्यं चतुरः कुमारान् पिता मुदं सन्ततमाप चोच्चम्। विशेषतो राममुखेन्दुबिम्बमवेक्ष्य राजा कृतकृत्य आसीत्॥",
+    "sec_per_syll": 0.269
+  },
+  "vaṃśastha": {
+    "wav": "vamshastha.wav",
+    "clip_id": "mbtn6__9f47ba4a",
+    "mode": "half",
+    "dur_s": 5.56,
+    "sr": 24000,
+    "hnr": 19.1,
+    "ref_text": "अतस्त्वमेव प्रतियाहि दक्षिणां दिशं समादाय मदङ्गुलीयकम्",
+    "full_verse": "अतस्त्वमेव प्रतियाहि दक्षिणां दिशं समादाय मदङ्गुलीयकम्। इतीरितोऽसौ पुरुषोत्तमेन ययौ दिशं तां युवराजयुक्तः॥",
+    "sec_per_syll": 0.255
+  },
+  "rathoddhatā": {
+    "wav": "rathoddhata.wav",
+    "clip_id": "sumadhwa__2_53",
+    "mode": "full",
+    "dur_s": 12.03,
+    "sr": 24000,
+    "hnr": 18.9,
+    "ref_text": "वासुदेवमिह वासुदेवतासत्कलामभिननन्द तं जनः । वासुदेवमिति वासुदेवसन्नामकं विविधलीलमर्भकम् ॥",
+    "full_verse": "वासुदेवमिह वासुदेवतासत्कलामभिननन्द तं जनः । वासुदेवमिति वासुदेवसन्नामकं विविधलीलमर्भकम् ॥",
+    "sec_per_syll": 0.301
+  },
+  "śālinī": {
+    "wav": "shalini.wav",
+    "clip_id": "sumadhwa__12_44",
+    "mode": "half",
+    "dur_s": 6.39,
+    "sr": 24000,
+    "hnr": 18.3,
+    "ref_text": "दुष्टात्माऽसौ भद्रमेकाकिनं यः क्षेप्तुं हेतुः सौख्यदाख्यं बभूव",
+    "full_verse": "दुष्टात्माऽसौ भद्रमेकाकिनं यः क्षेप्तुं हेतुः सौख्यदाख्यं बभूव । हर्यंशोऽयं तं न चक्षाम भूयस्तोके सन्ने सूकरं केसरीव ॥",
+    "sec_per_syll": 0.32
+  },
+  "indravaṃśā": {
+    "wav": "indravamsha.wav",
+    "clip_id": "sumadhwa__5_47",
+    "mode": "half",
+    "dur_s": 5.84,
+    "sr": 24000,
+    "hnr": 18.9,
+    "ref_text": "शृङ्गारसिन्धुं स भुजङ्गशायिनं श्रीरङ्गवासं कृतमङ्गलं सताम्",
+    "full_verse": "शृङ्गारसिन्धुं स भुजङ्गशायिनं श्रीरङ्गवासं कृतमङ्गलं सताम् । अमन्दधीर्देवमवन्दतागतः कवेरकन्याहिमवायुसेवितम् ॥",
+    "sec_per_syll": 0.268
+  },
+  "drutavilambita": {
+    "wav": "drutavilambita.wav",
+    "clip_id": "sumadhwa__1_54",
+    "mode": "half",
+    "dur_s": 8.06,
+    "sr": 24000,
+    "hnr": 18.4,
+    "ref_text": "अविदुषामिति संकरताकरः स किल संकर इत्यभिशुश्रुवे",
+    "full_verse": "निगमसन्मणिदीपगणोऽभवत्तदुरुवाग्गणपङ्कनिगूढभाः । अविदुषामिति संकरताकरः स किल संकर इत्यभिशुश्रुवे ॥",
+    "sec_per_syll": 0.369
+  },
+  "bhujaṅgaprayāta": {
+    "wav": "bhujangaprayata.wav",
+    "clip_id": "sumadhwa__11_79",
+    "mode": "half",
+    "dur_s": 6.62,
+    "sr": 24000,
+    "hnr": 18.1,
+    "ref_text": "महानन्दतीर्थस्य ये भाष्यभावं मनोवाग्भिरावर्तयन्ते स्वशक्त्या",
+    "full_verse": "महानन्दतीर्थस्य ये भाष्यभावं मनोवाग्भिरावर्तयन्ते स्वशक्त्या । सुराद्या नरान्ता मुकुन्दप्रसादादिमं मोक्षमेते भजन्ते सदेति ॥",
+    "sec_per_syll": 0.303
+  },
+  "mālinī": {
+    "wav": "malini.wav",
+    "clip_id": "nara__narasimha_1",
+    "mode": "half",
+    "dur_s": 7.31,
+    "sr": 24000,
+    "hnr": 20.2,
+    "ref_text": "उदयरवि सहस्रद्योतितं रूक्षवीक्षं प्रळय जलधिनादं कल्पकृद्वह्नि वक्त्रम्",
+    "full_verse": "उदयरवि सहस्रद्योतितं रूक्षवीक्षं प्रळय जलधिनादं कल्पकृद्वह्नि वक्त्रम् । सुरपतिरिपु वक्षश्छेद रक्तोक्षिताङ्गं प्रणतभयहरं तं नारसिंहं नमामि ॥",
+    "sec_per_syll": 0.268
+  },
+  "śārdūlavikrīḍita": {
+    "wav": "shardulavikridita.wav",
+    "clip_id": "sumadhwa__5_52",
+    "mode": "half",
+    "dur_s": 9.42,
+    "sr": 24000,
+    "hnr": 17.5,
+    "ref_text": "विद्योरुद्युतिधीरतारकतिरस्कारे पतङ्गायितो दुर्वादीभकुतर्ककुम्भदलने सिंहप्रबर्हायितः",
+    "full_verse": "विद्योरुद्युतिधीरतारकतिरस्कारे पतङ्गायितो दुर्वादीभकुतर्ककुम्भदलने सिंहप्रबर्हायितः । लोलालोककलोकदृक्कुमुदिनीसंह्लादनेऽब्जायितः संसन्मण्डलमण्डनायितवपुः स्वानन्दतीर्थो बभौ ॥",
+    "sec_per_syll": 0.273
+  },
+  "sragdharā": {
+    "wav": "sragdhara.wav",
+    "clip_id": "mbtn5__a1142ab7",
+    "mode": "half",
+    "dur_s": 11.83,
+    "sr": 24000,
+    "hnr": 16.5,
+    "ref_text": "देवार्च्यस्यापि पुत्रादृषिगणसहितात् प्राप्य पूजां प्रयातः शैलेशं चित्रकूटं कतिपयदिवसान्यत्र मोदन्नुवास",
+    "full_verse": "देवार्च्यस्यापि पुत्रादृषिगणसहितात् प्राप्य पूजां प्रयातः शैलेशं चित्रकूटं कतिपयदिवसान्यत्र मोदन्नुवास॥",
+    "sec_per_syll": 0.31
+  },
+  "vrutta-1": {
+    "wav": "vrutta1.wav",
+    "clip_id": "mbtn5__c84a880b",
+    "mode": "full",
+    "dur_s": 6.75,
+    "sr": 24000,
+    "hnr": 17.7,
+    "ref_text": "साक्षाद् ब्रह्मपिताऽसावित्येतेनास्य पादयोः पेते॥",
+    "full_verse": "साक्षाद् ब्रह्मपिताऽसावित्येतेनास्य पादयोः पेते॥",
+    "sec_per_syll": 0.437
+  },
+  "repeat_primes": {
+    "_doc": "In-context repeat-PRIMING refs (in-distribution dataset hemistichs, Prathosh voice) for alliterative verses. Use when a verse has a syllable group repeated >=3x: override the meter ref with a prime whose di_max >= the verse's deepest DI-repeat. Render PADA-WISE for these dense verses. COVERAGE: di-repeats up to 3x. MONO-repeats (ga x6, ḍiṃ x4) have NO in-distribution prime yet = known gap (the bhu* self-recordings were out-of-distribution and did NOT prime; kept in _orig_recordings/, unused).",
+    "prime_chata": {
+      "wav": "prime_chata.wav",
+      "mode": "half",
+      "dur_s": 6.83,
+      "sr": 24000,
+      "mono_max": 1,
+      "di_max": 3,
+      "demonstrates": "caṭa ×3 + kaḍi ×3 (di)",
+      "source": "nara__narasimha_18 hemi1 (stripped)",
+      "ref_text": "ಚಟ ಚಟ ಚಟ ದೂರಂ ಮೋಹಯ ಭ್ರಾಮಯಾರಿನ್ ಕಡಿ ಕಡಿ ಕಡಿ ಕಾಯಂ ಜ್ವಾರಯ ಸ್ಫೋಟಯಸ್ವ"
+    },
+    "prime_jaya": {
+      "wav": "prime_jaya.wav",
+      "mode": "half",
+      "dur_s": 7.74,
+      "sr": 24000,
+      "mono_max": 1,
+      "di_max": 3,
+      "demonstrates": "jaya ×3 + daha ×2 (di)",
+      "source": "nara__narasimha_20 hemi2 (stripped, trailing-silence trimmed)",
+      "ref_text": "ಜಯ ಜಯ ಜಯ ಮುರ್ತೇಽನಾರ್ತ ಜೇತವ್ಯ ಪಕ್ಷಂ ದಹ ದಹ ನರಸಿಂಹಾಸಹ್ಯವೀರ್ಯಾಹಿತಂಮೇ"
+    }
+  },
+  "gadya": {
+    "wav": "gadya.wav",
+    "class": "gadya",
+    "mode": "full",
+    "dur_s": 8.03,
+    "sr": 24000,
+    "hnr": 19.4,
+    "ref_text": "ಇತಿ ಶ್ರೀಮಲ್ಲಿಕುಚಿಸೂರಿಸೂನುನಾರಯಣಪಣ್ಡಿತಾಚಾರ್ಯವಿರಚಿತಾ ಶಿವಸ್ತುತಿಃ ಸಂಪೂರ್ಣಾ",
+    "source": "rudra__5a96fc23 (colophon, prose)",
+    "sec_per_syll": 0.26
+  },
+  "gadya_mbtn": {
+    "wav": "gadya_mbtn.wav",
+    "class": "gadya",
+    "mode": "full",
+    "dur_s": 8.5,
+    "sr": 24000,
+    "hnr": 17.2,
+    "ref_text": "ಇತಿ ಶ್ರೀಮದಾನನ್ದತೀರ್ಥಭಗವತ್ಪಾದಾಚಾರ್ಯವಿರಚಿತೇ ದ್ವಾದಶಸ್ತೋತ್ರೇ ಪ್ರಥಮೋಽಧ್ಯಾಯಃ",
+    "source": "ds__d4d68999 (MBTN dvādaśastotra colophon, prose)",
+    "sec_per_syll": 0.26
+  }
+}
