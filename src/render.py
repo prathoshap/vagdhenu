@@ -172,7 +172,12 @@ ap.add_argument("--gap_halant", type=float, default=0.20)
 a = ap.parse_args()
 
 CFG = dict(dim=1024, depth=22, heads=16, ff_mult=2, text_dim=512, conv_layers=4)
-vocab = glob.glob(os.path.expanduser("~/.cache/huggingface/hub/models--ai4bharat--IndicF5/snapshots/*/checkpoints/vocab.txt"))[0]
+# vocab.txt ships in the weights repo (-> models/ via download_weights.py); fall back to the IndicF5 cache for legacy local setups
+_vocab_cands = [os.path.join(CHAMP, "vocab.txt"), os.path.join(HERE, "reference_bank", "vocab.txt")] \
+    + glob.glob(os.path.expanduser("~/.cache/huggingface/hub/models--ai4bharat--IndicF5/snapshots/*/checkpoints/vocab.txt"))
+vocab = next((v for v in _vocab_cands if v and os.path.exists(v)), None)
+if vocab is None:
+    raise SystemExit("vocab.txt not found — run scripts/download_weights.py")
 cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device="cuda")
 ck = torch.load(a.voice, map_location="cpu", weights_only=True)
 ema = {k.replace("ema_model.", ""): v for k, v in ck["ema_model_state_dict"].items() if k not in ("initted", "step")}

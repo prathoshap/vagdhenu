@@ -47,8 +47,11 @@ _ensure_bigvgan()
 WEIGHTS_REPO = os.environ.get("VAGDHENU_HF", "prathoshap/vagdhenu")
 VOICE_FILE   = os.environ.get("VAGDHENU_VOICE", "voice_steer_ema_2026-06-17.pt")
 VOC_FILE     = os.environ.get("VAGDHENU_VOC", "voc_bigvgan_EMA_2026-06-11.pth")
-INDICF5_REPO = "ai4bharat/IndicF5"
+VOCAB_FILE   = os.environ.get("VAGDHENU_VOCAB", "vocab.txt")  # tokenizer vocab, shipped in the weights repo
 BANK_PATH    = os.path.join(SRC, "reference_bank", "bank.json")
+# vocab.txt is bundled with the repo (IndicF5's MIT tokenizer vocab) so there's NO runtime dependency
+# on the gated ai4bharat/IndicF5 repo. Falls back to the weights repo, then None (render_core globs).
+BUNDLED_VOCAB = os.path.join(SRC, "reference_bank", VOCAB_FILE)
 
 AUTO = "__auto__"
 
@@ -106,13 +109,16 @@ _RENDERER = None
 
 
 def _ensure_assets():
-    """Download the 2 release weights + IndicF5 vocab into the HF cache (CPU-only)."""
+    """Fetch the 2 release weights (CPU-only) + resolve the tokenizer vocab. vocab.txt is bundled
+    locally (no gated-IndicF5 dependency); if missing, try the weights repo."""
     voice = hf_hub_download(WEIGHTS_REPO, VOICE_FILE)
     voc   = hf_hub_download(WEIGHTS_REPO, VOC_FILE)
-    try:
-        vocab = hf_hub_download(INDICF5_REPO, "checkpoints/vocab.txt")
-    except Exception:
-        vocab = None  # render_core will fall back to globbing the cache
+    vocab = BUNDLED_VOCAB if os.path.exists(BUNDLED_VOCAB) else None
+    if vocab is None:
+        try:
+            vocab = hf_hub_download(WEIGHTS_REPO, VOCAB_FILE)
+        except Exception:
+            vocab = None  # last resort: render_core globs the IndicF5 cache (local dev only)
     return voice, voc, vocab
 
 

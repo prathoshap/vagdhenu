@@ -202,8 +202,14 @@ class Renderer:
         self._ta = ta
 
         CFG = dict(dim=1024, depth=22, heads=16, ff_mult=2, text_dim=512, conv_layers=4)
-        vocab = vocab_file or glob.glob(os.path.expanduser(
-            "~/.cache/huggingface/hub/models--ai4bharat--IndicF5/snapshots/*/checkpoints/vocab.txt"))[0]
+        # vocab.txt (IndicF5's MIT tokenizer vocab) ships beside the bank; fall back to the IndicF5
+        # cache for legacy local setups. Never index an empty glob.
+        _cands = [vocab_file, os.path.join(os.path.dirname(bank_path), "vocab.txt")] \
+            + glob.glob(os.path.expanduser(
+                "~/.cache/huggingface/hub/models--ai4bharat--IndicF5/snapshots/*/checkpoints/vocab.txt"))
+        vocab = next((v for v in _cands if v and os.path.exists(v)), None)
+        if vocab is None:
+            raise FileNotFoundError("vocab.txt not found (pass vocab_file= or ship it beside bank.json)")
         self.cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=device)
         ck = torch.load(voice_path, map_location="cpu", weights_only=True)
         ema = {k.replace("ema_model.", ""): v for k, v in ck["ema_model_state_dict"].items()
