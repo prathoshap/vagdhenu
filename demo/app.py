@@ -83,7 +83,7 @@ def _tx(deva, scheme):
 
 
 _SAMPLES = [
-    ("Kṛṣṇa — Vāsudevasutaṃ (Devanagari)",
+    ("Kṛṣṇa — Vasudevasutaṃ (Devanagari)",
      "वासुदेवसुतं देवं कंसचाणूरमर्दनम् ।\nदेवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥", _S.DEVANAGARI),
     ("Viṣṇu — Śuklāmbaradharaṃ (Devanagari)",
      "शुक्लाम्बरधरं विष्णुं शशिवर्णं चतुर्भुजम् ।\nप्रसन्नवदनं ध्यायेत् सर्वविघ्नोपशान्तये ॥", _S.DEVANAGARI),
@@ -165,6 +165,8 @@ Turn a **Sanskrit verse into traditional chant**. Just paste a verse and press *
   Bengali, Gujarati, Gurmukhi, Oriya, Grantha. It's detected automatically.
 - The **meter is auto-detected** — you don't need to know it. (You can set it yourself under *Advanced*.)
 - Put each line/half-verse on its own line, or separate them with `।` / `॥`.
+
+*Developed and maintained by Prof. Prathosh, Indian Institute of Science, Bengaluru.*  ·  [GitHub project](https://github.com/prathoshap/vagdhenu)
 """
 
 FOOTER = """\
@@ -193,7 +195,9 @@ with gr.Blocks(title="Vāgdhenu — Sanskrit chant", theme=gr.themes.Soft()) as 
             out = gr.Audio(label="Chant", type="numpy", autoplay=False)
             status = gr.Markdown("")
     btn.click(synthesize, inputs=[txt, meter, seed], outputs=[out, status])
-    gr.Markdown("### 📜 Sample shlokas — click one to load it, then press **Chant it**")
+    gr.Markdown("### 📜 Sample shlokas — click one to load it, then press **Chant it**\n"
+                "Or pick any verse from the **[Bhagavad Gītā](https://sanskritdocuments.org/doc_giitaa/bhagvadnew.html)** "
+                "and paste it above.")
     gr.Examples(
         examples=EXAMPLES,
         example_labels=EXAMPLE_LABELS,
