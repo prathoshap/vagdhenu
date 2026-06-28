@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vāgdhenu — A Vṛtta-Aware Śloka-to-Chant TTS for Sanskrit</title>
+<meta name="description" content="Vāgdhenu: a meter-aware Sanskrit śloka-to-chant text-to-speech system. Prof. Prathosh A P, Indian Institute of Science, Bengaluru.">
+<style>
+  :root { --ink:#1a1a1a; --accent:#9a2d0c; --line:#e6e1d8; --bg:#fbfaf7; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:#1a1a1a;
+         font-family:Georgia,'Times New Roman',serif; line-height:1.6; }
+  .wrap { max-width:760px; margin:0 auto; padding:3.2rem 1.3rem 4rem; }
+  h1 { font-size:1.85rem; line-height:1.25; margin:0 0 .5rem; font-weight:700; letter-spacing:-.01em; }
+  .by { color:#555; margin:.1rem 0 .1rem; }
+  .by a { color:#555; }
+  .tag { color:#555; font-style:italic; margin:.6rem 0 1.4rem; }
+  a { color:#9a2d0c; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .links { font-size:.98rem; margin:1.1rem 0 2.2rem; padding:.7rem 0; border-top:1px solid #e6e1d8; border-bottom:1px solid #e6e1d8; }
+  .links a { white-space:nowrap; }
+  .links .sep { color:#bbb; padding:0 .45rem; }
+  h2 { font-size:1.05rem; text-transform:uppercase; letter-spacing:.08em; color:#9a2d0c; margin:2.6rem 0 .9rem; font-weight:700; }
+  p { margin:.7rem 0; }
+  .demo { border:1px solid #e6e1d8; border-radius:8px; overflow:hidden; background:#fff; }
+  .demo iframe { display:block; width:100%; height:820px; border:0; }
+  .note { font-size:.9rem; color:#777; margin:.5rem 0 0; }
+  .clip { margin:0 0 1.4rem; padding:0 0 1.2rem; border-bottom:1px solid #efeae0; }
+  .clip figcaption { font-size:.95rem; }
+  .meter { font-style:italic; font-weight:700; }
+  .src { color:#777; }
+  .verse { font-size:1.06rem; line-height:1.9; margin:.45rem 0 .7rem;
+            font-family:'Noto Serif Devanagari','Nirmala UI',serif; color:#2a2a2a; }
+  audio { width:100%; height:38px; }
+  footer { margin-top:3rem; padding-top:1.2rem; border-top:1px solid #e6e1d8; font-size:.9rem; color:#777; }
+  footer a { color:#777; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vāgdhenu</h1>
+  <p class="tag">A vṛtta (meter) aware śloka-to-chant text-to-speech system for Sanskrit.</p>
+  <p class="by">Prof. Prathosh A P &middot; Indian Institute of Science, Bengaluru &middot; <a href="mailto:prathosh@iisc.ac.in">prathosh@iisc.ac.in</a></p>
+
+  <p class="links">
+    <a href="vagdhenu_paper.pdf">Paper (PDF)</a><span class="sep">·</span>
+    <a href="https://github.com/prathoshap/vagdhenu">Code</a><span class="sep">·</span>
+    <a href="https://huggingface.co/prathoshap/vagdhenu">Weights</a><span class="sep">·</span>
+    <a href="https://huggingface.co/datasets/prathoshap/vagdhenu-data">Dataset</a><span class="sep">·</span>
+    <a href="https://huggingface.co/spaces/prathoshap/vagdhenu-demo">Demo</a>
+  </p>
+
+  <h2>Try it</h2>
+  <p>Paste a Sanskrit verse in any Indian script; the meter is detected automatically.</p>
+  <div class="demo">
+    <iframe src="https://prathoshap-vagdhenu-demo.hf.space" loading="lazy"
+            allow="autoplay" title="Vāgdhenu live demo"></iframe>
+  </div>
+  <p class="note">The demo runs on Hugging Face ZeroGPU; the first chant takes ~30–60s while the model loads.</p>
+
+  <h2>Listen — sample chants</h2>
+  <p>Five vṛttas, rendered by this system for two shipped deployments.</p>
+    <figure class="clip">
+      <figcaption><span class="meter">vasantatilakā</span> &middot; <span class="src">Mahābhārata Tātparya Nirṇaya 1.1</span></figcaption>
+      <p class="verse">नारायणाय परिपूर्णगुणार्णवाय विश्वोदयस्थितिलयोन्नियतिप्रदाय ।<br>ज्ञानप्रदाय विबुधासुरसौख्यदुःखसत्कारणाय वितताय नमोनमस्ते</p>
+      <audio controls preload="none" src="audio/01_vasantatilaka_mbtn.mp3"></audio>
+    </figure>
+    <figure class="clip">
+      <figcaption><span class="meter">śārdūlavikrīḍita</span> &middot; <span class="src">Śrīmad Bhāgavatam 1.1.2</span></figcaption>
+      <p class="verse">जन्माद्यस्य यतोऽन्वयादितरतश्‍चार्थेष्वभिज्ञः स्वराट् तेने ब्रह्म हृदा य आदिकवये मुह्यन्ति यं सूरयः। तेजोवारिमृदां यथा विनिमयो यत्र त्रिसर्गो मृषा धाम्ना स्वेन सदा निरस्तकुहकं सत्यं परं धीमहि</p>
+      <audio controls preload="none" src="audio/02_shardulavikridita_bhagavatam.mp3"></audio>
+    </figure>
+    <figure class="clip">
+      <figcaption><span class="meter">anuṣṭubh</span> &middot; <span class="src">Śrīmad Bhāgavatam 1.1.5</span></figcaption>
+      <p class="verse">नैमिषेऽनिमिषक्षेत्रे ऋषयः शौनकादयः। सत्रं स्वर्गाय लोकाय सहस्रसममासत</p>
+      <audio controls preload="none" src="audio/03_anushtubh_bhagavatam.mp3"></audio>
+    </figure>
+    <figure class="clip">
+      <figcaption><span class="meter">vaṃśastha</span> &middot; <span class="src">Śrīmad Bhāgavatam 1.3.5</span></figcaption>
+      <p class="verse">पश्यन्त्यदो रूपमदभ्रचक्षुषः सहस्रपादोरुभुजाननाद्भुतम्। सहस्रमूर्धश्रवणाक्षिनासिकं सहस्रमौल्यम्बरकुण्डलोल्‍लसत्</p>
+      <audio controls preload="none" src="audio/04_vamshastha_bhagavatam.mp3"></audio>
+    </figure>
+    <figure class="clip">
+      <figcaption><span class="meter">drutavilambita</span> &middot; <span class="src">Śrīmad Bhāgavatam 1.1.4</span></figcaption>
+      <p class="verse">निगमकल्पतरोर्गलितं फलं शुकमुखादमृतद्रवसंयुतम्। पिबत भागवतं रसमालयं मुहुरहो रसिका भुवि भावुकाः</p>
+      <audio controls preload="none" src="audio/05_drutavilambita_bhagavatam.mp3"></audio>
+    </figure>
+
+  <h2>About</h2>
+  <p>Vāgdhenu maps a metrical verse to its chanted <em>pārāyaṇa</em> recitation. It pairs an
+  off-the-shelf flow-matching TTS backbone and a neural vocoder with the components a faithful
+  Sanskrit chant pipeline actually needs: a script-aware frontend that routes Sanskrit through
+  Kannada orthography (avoiding the Hindi schwa-deletion that Devanagari triggers), visarga sandhi
+  and the jihvāmūlīya/upadhmānīya allophones, the aspiration contrast, the three sibilants and the
+  full retroflex series kept distinct, homorganic anusvāra and vocalic ṝ — and a vṛtta-aware
+  mechanism that detects the meter and selects a matched reference under the <em>half-reference
+  rule</em>. A five-hour clone on the flow-matching backbone reaches an expert MOS of about 4.6, and
+  dense conjuncts (including retroflex aspirates) render correctly — the class earlier architectures
+  could not crack.</p>
+
+  <h2>Deployments</h2>
+  <p>This system produced two corpora at scale:</p>
+  <p>
+    &middot; <strong>Mahābhārata Tātparya Nirṇaya</strong> — 32 chapters, 5,183 verses (~17.5h):
+    <a href="https://www.youtube.com/playlist?list=PLL1s8qiaGy0IP0G_PhlwaGA5EOfzoKrV_">video series</a><br>
+    &middot; <strong>Śrīmad Bhāgavatam</strong> — ~18,000 verses across 12 books:
+    <a href="https://www.youtube.com/playlist?list=PLDiYyVdyo2Sc">karaoke-video series</a>
+  </p>
+
+  <footer>
+    Developed and maintained by <strong>Prof. Prathosh, Indian Institute of Science, Bengaluru</strong>.<br>
+    Code Apache-2.0 · data CC-BY-4.0. Base models: AI4Bharat IndicF5 &amp; NVIDIA BigVGAN-v2 (MIT).
+  </footer>
+</div>
+</body>
+</html>
