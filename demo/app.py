@@ -88,7 +88,7 @@ _MAL = ("हठलुठ दल घिष्टोत्कण्ठदष्ट
 # (label, devanagari, display script, meter)  — meter=AUTO unless detection needs help
 _SAMPLES = [
     ("Kṛṣṇa — Vasudevasutaṃ (Devanagari)",
-     "वासुदेवसुतं देवं कंसचाणूरमर्दनम् ।\nदेवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥", _S.DEVANAGARI, AUTO),
+     "वसुदेवसुतं देवं कंसचाणूरमर्दनम् ।\nदेवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥", _S.DEVANAGARI, AUTO),
     ("Viṣṇu — Śuklāmbaradharaṃ (Devanagari)",
      "शुक्लाम्बरधरं विष्णुं शशिवर्णं चतुर्भुजम् ।\nप्रसन्नवदनं ध्यायेत् सर्वविघ्नोपशान्तये ॥", _S.DEVANAGARI, AUTO),
     ("Narasiṃha — retroflex tongue-twister (mālinī)", _MAL, _S.DEVANAGARI, "mālinī"),

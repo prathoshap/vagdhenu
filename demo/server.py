@@ -38,7 +38,7 @@ _MAL = ("हठलुठ दल घिष्टोत्कण्ठदष्ट
         "पठतिनुतव कण्ठाधिष्ठ घोरान्त्रमाला\nदह दह नरसिंहासह्यवीर्याहितं मे ॥")
 _KAR = "कराग्रे वसते लक्ष्मीः करमध्ये सरस्वती ।\nकरमूले तु गोविन्दः प्रभाते करदर्शनम् ॥"
 _SAMPLES = [
- ("Kṛṣṇa — Vasudevasutaṃ (Devanagari)","वासुदेवसुतं देवं कंसचाणूरमर्दनम् ।\nदेवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥",_S.DEVANAGARI,AUTO),
+ ("Kṛṣṇa — Vasudevasutaṃ (Devanagari)","वसुदेवसुतं देवं कंसचाणूरमर्दनम् ।\nदेवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥",_S.DEVANAGARI,AUTO),
  ("Viṣṇu — Śuklāmbaradharaṃ (Devanagari)","शुक्लाम्बरधरं विष्णुं शशिवर्णं चतुर्भुजम् ।\nप्रसन्नवदनं ध्यायेत् सर्वविघ्नोपशान्तये ॥",_S.DEVANAGARI,AUTO),
  ("Narasiṃha — retroflex tongue-twister (mālinī)", _MAL, _S.DEVANAGARI, "mālinī"),
  ("Karāgre vasate — jihvāmūlīya + upadhmānīya", _KAR, _S.DEVANAGARI, AUTO),
