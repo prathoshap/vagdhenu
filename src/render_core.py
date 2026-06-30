@@ -7,7 +7,7 @@ this module exists so the Gradio demo (and any interactive caller) can load the 
 render single inputs without argparse / file I/O.
 
 Usage:
-    r = Renderer(voice_path, voc_path, bank_path, device="cuda")
+    r = Renderer(voice_path, voc_path, bank_path)   # device auto-selects MPS/CUDA/CPU
     sr, audio = r.render_one("तस्मै नमः ...", meter="anuṣṭubh")
 """
 import os, sys, glob, json, re, numpy as np, torch
@@ -15,6 +15,7 @@ import os, sys, glob, json, re, numpy as np, torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import prep_text as PT  # noqa: E402
+from _device import pick_device  # noqa: E402  (MPS/CUDA/CPU auto-select)
 
 SR = 24000
 # Unknown/unmatched vṛtta -> render against this meter's reference rather than erroring. An
@@ -189,12 +190,12 @@ def detect_meter_key(text):
 class Renderer:
     """Loads DiT + vocos + BigVGAN + the reference bank ONCE; render_one() synthesizes a single input."""
 
-    def __init__(self, voice_path, voc_path, bank_path, device="cuda", vocab_file=None,
+    def __init__(self, voice_path, voc_path, bank_path, device=None, vocab_file=None,
                  speed=0.90, nfe=64, cfg=3.0, gap=0.55, gap_halant=0.20):
         import bigvgan
         from f5_tts.infer.utils_infer import load_model, load_vocoder, preprocess_ref_audio_text
         from f5_tts.model import DiT
-        self.device = device
+        self.device = pick_device(device)   # None → auto (mps on Apple Silicon, cuda if present, else cpu)
         self.speed = speed; self.nfe = nfe; self.cfg = cfg
         self.gap = gap; self.gap_halant = gap_halant
         self._preprocess = preprocess_ref_audio_text

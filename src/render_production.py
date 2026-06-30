@@ -3,12 +3,17 @@ Gold pipeline: voice_armA_ema (F5/IndicF5 DiT) + nvidia BigVGAN-v2 vocoder (fine
 BigVGAN-v2 is the production vocoder (vocos left only the long-vowel phase 'shiver'; BigVGAN removes it).
 All paths durable (CHAMPION_2026-06-11), no /tmp dependency. See CHAMPION MANIFEST for provenance."""
 import os, sys, glob, json, argparse, numpy as np, soundfile as sf, torch
-PROD = "<PROD>"
-sys.path.insert(0, PROD)
+HERE = os.path.dirname(os.path.abspath(__file__))          # .../src
+REPO = os.path.dirname(HERE)                                # project root
+MODELS = os.path.join(REPO, "models")                       # download_weights.py target
+sys.path.insert(0, HERE)
 import prep_text as PT, bigvgan
+from _device import DEVICE                                  # MPS/CUDA/CPU auto-select (Apple Silicon)
 from f5_tts.infer.utils_infer import load_model, load_vocoder, infer_process, preprocess_ref_audio_text
 from f5_tts.model import DiT
-CHAMP = f"{PROD}/CHAMPION_2026-06-11"
+# weight dirs (download_weights.py populates models/; bank ships in src/reference_bank/)
+CHAMP = MODELS
+BANK_DEFAULT = os.path.join(HERE, "reference_bank", "bank.json")
 
 def n_aksharas(s):
     """Count syllable nuclei (Devanagari/Kannada): independent vowels + consonants not followed by virama."""
@@ -195,11 +200,11 @@ def _tanpura(y, sr, level):
 ap = argparse.ArgumentParser()
 ap.add_argument("--ref_wav"); ap.add_argument("--ref_text_file")
 ap.add_argument("--meter", help="auto-load ref wav+text from reference bank by meter name/slug")
-ap.add_argument("--bank", default=f"{PROD}/production/reference_bank/bank.json")
+ap.add_argument("--bank", default=BANK_DEFAULT)
 ap.add_argument("--padas", required=True, help="JSON list of text segments (split at daṇḍa/half-verse)")
 ap.add_argument("--out", required=True)
-ap.add_argument("--voice", default=f"{CHAMP}/voice_steer_ema_2026-06-17.pt")  # E79 steering voice; gold fallback: voice_armA_ema_2026-06-11.pt
-ap.add_argument("--voc", default=f"{CHAMP}/voc_bigvgan_EMA_2026-06-11.pth")
+ap.add_argument("--voice", default=os.path.join(CHAMP, "voice_steer_ema_2026-06-17.pt"))  # E79 steering voice; gold fallback: voice_armA_ema_2026-06-11.pt
+ap.add_argument("--voc", default=os.path.join(CHAMP, "voc_bigvgan_EMA_2026-06-11.pth"))
 ap.add_argument("--speed", type=float, default=0.90); ap.add_argument("--nfe", type=int, default=64)
 ap.add_argument("--cfg", type=float, default=3.0); ap.add_argument("--gap", type=float, default=0.55)
 ap.add_argument("--gap_halant", type=float, default=0.20, help="extra silence (s) added AFTER a chunk that ends in a pure consonant (virama/halant), to equalize PERCEIVED pause vs vowel-final chunks")
@@ -220,8 +225,14 @@ ap.add_argument("--double_mix", type=float, default=0.72, help="level of the dou
 ap.add_argument("--tanpura", type=float, default=0.0, help="mix a synthesized tanpura drone tuned to the chant Sa at this level (e.g. 0.08)")
 a = ap.parse_args(); SR = 24000
 CFG = dict(dim=1024, depth=22, heads=16, ff_mult=2, text_dim=512, conv_layers=4)
-vocab = glob.glob(os.path.expanduser("~/.cache/huggingface/hub/models--ai4bharat--IndicF5/snapshots/*/checkpoints/vocab.txt"))[0]
-cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device="cuda")
+# vocab.txt: prefer models/ (download_weights.py target) → bundled src/reference_bank/ → IndicF5 cache
+_vocab_cands = [os.path.join(MODELS, "vocab.txt"), os.path.join(HERE, "reference_bank", "vocab.txt")] \
+    + glob.glob(os.path.expanduser("~/.cache/huggingface/hub/models--ai4bharat--IndicF5/snapshots/*/checkpoints/vocab.txt"))
+vocab = next((v for v in _vocab_cands if v and os.path.exists(v)), None)
+if vocab is None:
+    raise FileNotFoundError("vocab.txt not found — run: python scripts/download_weights.py")
+print(f"[device] using {DEVICE}  | [vocab] {vocab}")
+cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=DEVICE)
 ck = torch.load(a.voice, map_location="cpu", weights_only=True)
 ema = {k.replace("ema_model.", ""): v for k, v in ck["ema_model_state_dict"].items() if k not in ("initted", "step")}
 cfm.load_state_dict(ema, strict=False); cfm.eval()
@@ -233,10 +244,10 @@ cap = Cap(real_voc)
 # --- PRODUCTION VOCODER: nvidia BigVGAN-v2 (NOT the VITS2 Generator) ---
 g = bigvgan.BigVGAN.from_pretrained("nvidia/bigvgan_v2_24khz_100band_256x", use_cuda_kernel=False)
 bsd = torch.load(a.voc, map_location="cpu"); bsd = bsd.get("model", bsd)
-g.load_state_dict(bsd); g.remove_weight_norm(); g = g.cuda().eval()
+g.load_state_dict(bsd); g.remove_weight_norm(); g = g.to(DEVICE).eval()
 for p in g.parameters(): p.requires_grad = False
 def bvgan(mel):
-    m = torch.from_numpy(mel).cuda()
+    m = torch.from_numpy(mel).to(DEVICE)
     with torch.no_grad():
         if m.dim()==3 and m.shape[1]!=100 and m.shape[2]==100: m = m.transpose(1,2)
         return g(m).squeeze().cpu().numpy().astype(np.float32)
@@ -354,7 +365,7 @@ for i, p in enumerate(PIECES):
     for att in range(4):
         torch.manual_seed(a.seed + att)   # all chunks start from the vetted base seed; att only on retry (was seed+i*5 -> chunk1 landed on bad seed 55)
         _fixd = (REF_LEN_SEC + NSYLL[i]*a.sec_per_syll) if (a.sec_per_syll > 0 and NSYLL) else None
-        w, sr, _ = infer_process(ref_audio, ref_t, p, cfm, cap, mel_spec_type="vocos", speed=a.speed, nfe_step=a.nfe, cfg_strength=a.cfg, device="cuda", fix_duration=_fixd)
+        w, sr, _ = infer_process(ref_audio, ref_t, p, cfm, cap, mel_spec_type="vocos", speed=a.speed, nfe_step=a.nfe, cfg_strength=a.cfg, device=DEVICE, fix_duration=_fixd)
         w = np.array(w, dtype=np.float32)
         if np.abs(w).max() > 1.5: w = w/32768.0
         if float(np.sqrt((w**2).mean())) > 0.04: au = w; break
