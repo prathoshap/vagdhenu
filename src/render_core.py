@@ -7,10 +7,14 @@ this module exists so the Gradio demo (and any interactive caller) can load the 
 render single inputs without argparse / file I/O.
 
 Usage:
-    r = Renderer(voice_path, voc_path, bank_path, device="cuda")
+    r = Renderer(voice_path, voc_path, bank_path)   # auto-selects CUDA → MPS → CPU
     sr, audio = r.render_one("तस्मै नमः ...", meter="anuṣṭubh")
 """
 import os, sys, glob, json, re, numpy as np, torch
+
+# Some MPS ops (e.g. istft / unfold_backward) are not yet implemented natively on Apple Silicon;
+# this env var makes PyTorch silently fall back to CPU for those ops only.
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -189,7 +193,11 @@ def detect_meter_key(text):
 class Renderer:
     """Loads DiT + vocos + BigVGAN + the reference bank ONCE; render_one() synthesizes a single input."""
 
-    def __init__(self, voice_path, voc_path, bank_path, device="cuda", vocab_file=None,
+    def __init__(self, voice_path, voc_path, bank_path,
+                 device=("cuda" if __import__("torch").cuda.is_available()
+                         else "mps" if __import__("torch").backends.mps.is_available()
+                         else "cpu"),
+                 vocab_file=None,
                  speed=0.90, nfe=64, cfg=3.0, gap=0.55, gap_halant=0.20):
         import bigvgan
         from f5_tts.infer.utils_infer import load_model, load_vocoder, preprocess_ref_audio_text
