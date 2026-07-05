@@ -130,7 +130,7 @@ def _get_renderer():
     if _RENDERER is None:
         from render_core import Renderer
         voice, voc, vocab = _ensure_assets()
-        _RENDERER = Renderer(voice, voc, BANK_PATH, device="cuda", vocab_file=vocab)
+        _RENDERER = Renderer(voice, voc, BANK_PATH, vocab_file=vocab)   # device auto-selects MPS/CUDA/CPU
     return _RENDERER
 
 

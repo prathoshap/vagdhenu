@@ -29,9 +29,9 @@ scripts/     env setup + weight download
 ```
 
 ## Install & quickstart
-Requires **Python 3.10** and a **CUDA 12.1 GPU**.
+Requires **Python 3.10**. Inference runs on **CUDA** (Linux + CUDA 12.1), **Apple Silicon (MPS)**, or **CPU**; `src/_device.py` auto-selects (`cuda → mps → cpu`). Override with `export VAGDHENU_DEVICE=cpu|mps|cuda`.
 ```bash
-bash scripts/setup.sh    # torch+cu121, deps, BigVGAN, and downloads weights -> models/
+bash scripts/setup.sh    # torch (platform build), deps, BigVGAN, weights -> models/
 # render a Devanagari verse (+ meter) to a chanted wav:
 python src/render.py --shard examples/sample_shard.json --results /tmp/res.json --outdir out
 # -> out/sample_anushtubh.wav

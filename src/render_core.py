@@ -211,7 +211,7 @@ class Renderer:
         vocab = next((v for v in _cands if v and os.path.exists(v)), None)
         if vocab is None:
             raise FileNotFoundError("vocab.txt not found (pass vocab_file= or ship it beside bank.json)")
-        self.cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=device)
+        self.cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=self.device)
         ck = torch.load(voice_path, map_location="cpu", weights_only=True)
         ema = {k.replace("ema_model.", ""): v for k, v in ck["ema_model_state_dict"].items()
                if k not in ("initted", "step")}
@@ -225,7 +225,7 @@ class Renderer:
 
         g = bigvgan.BigVGAN.from_pretrained("nvidia/bigvgan_v2_24khz_100band_256x", use_cuda_kernel=False)
         bsd = torch.load(voc_path, map_location="cpu"); bsd = bsd.get("model", bsd)
-        g.load_state_dict(bsd); g.remove_weight_norm(); g = g.to(device).eval()
+        g.load_state_dict(bsd); g.remove_weight_norm(); g = g.to(self.device).eval()
         for p in g.parameters(): p.requires_grad = False
         self.g = g
 
