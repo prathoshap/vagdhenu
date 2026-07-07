@@ -80,8 +80,16 @@ def _danda_fix(s):
         s = s[:-1] + "ಮ್"
     return s
 
-_AN_KA=set("ಕಖಗಘಙ"); _AN_CA=set("ಚಛಜಝಞ"); _AN_TTA=set("ಟಠಡಢಣ"); _AN_TA=set("ತಥದಧನ")
-def _anusvara_m(s):
+_AN_KA=set("ಕಖಗಘಙ"); _AN_CA=set("ಚಛಜಝಞ"); _AN_TTA=set("ಟಠಡಢಣ"); _AN_TA=set("ತಥದಧನ"); _AN_PA=set("ಪಫಬಭಮ")
+def _anusvara_m(s, policy="acoustic"):
+    """Anusvāra ಂ → nasal before the following consonant (looks past spaces / word boundary).
+    Stops always assimilate homorganically (ka→ಙ್, ca→ಞ್, ṭa→ಣ್, ta→ನ್). The y/r/l/v/ś/ṣ/s/h case is
+    POLICY-GATED:
+      "acoustic" (DEFAULT — upstream behavior, byte-identical): all → ಮ್. An explicit consonant the
+          acoustic model voices reliably; deliberately guards against bare-anusvāra conjunct drops.
+      "shastra": ಯ → candrabindu ಁ (nasalized-ya [ỹ]); labials प फ ब भ म → ಮ್; र ल व श ष स ह → retain ಂ.
+          Grammatically correct (Pāṇini 8.4.58; mirrors tts_normalize.rewrite_anusvara). Opt in only
+          once the acoustic model is verified not to drop bare nasals on the target corpus."""
     res=[]; n=len(s)
     for i,c in enumerate(s):
         if c=="ಂ":
@@ -93,7 +101,11 @@ def _anusvara_m(s):
             elif nxt in _AN_CA:  res.append("ಞ್")
             elif nxt in _AN_TTA: res.append("ಣ್")
             elif nxt in _AN_TA:  res.append("ನ್")
-            else:                res.append("ಮ್")
+            elif policy == "shastra":
+                if   nxt in _AN_PA: res.append("ಮ್")   # labials → ಮ್ (parasavarṇa)
+                elif nxt == "ಯ":    res.append("ಁ")    # ya → candrabindu (nasalized-ya)
+                else:               res.append("ಂ")     # र ल व श ष स ह → retain
+            else:                res.append("ಮ್")       # "acoustic": upstream default (all → ಮ್)
         else: res.append(c)
     return "".join(res)
 
@@ -190,11 +202,12 @@ class Renderer:
     """Loads DiT + vocos + BigVGAN + the reference bank ONCE; render_one() synthesizes a single input."""
 
     def __init__(self, voice_path, voc_path, bank_path, device="cuda", vocab_file=None,
-                 speed=0.90, nfe=64, cfg=3.0, gap=0.55, gap_halant=0.20):
+                 speed=0.90, nfe=64, cfg=3.0, gap=0.55, gap_halant=0.20, anusvara_policy="acoustic"):
         import bigvgan
         from f5_tts.infer.utils_infer import load_model, load_vocoder, preprocess_ref_audio_text
         from f5_tts.model import DiT
         self.device = device
+        self._anusvara_policy = anusvara_policy
         self.speed = speed; self.nfe = nfe; self.cfg = cfg
         self.gap = gap; self.gap_halant = gap_halant
         self._preprocess = preprocess_ref_audio_text
@@ -216,7 +229,7 @@ class Renderer:
                if k not in ("initted", "step")}
         self.cfm.load_state_dict(ema, strict=False); self.cfm.eval()
 
-        real_voc = load_vocoder("vocos")
+        real_voc = load_vocoder("vocos", device=device)  # port: pin vocos to OUR device (was f5_tts auto-detect → mismatch on non-CUDA)
         class Cap:
             def __init__(s, r): s.r = r; s.last = None
             def decode(s, m): s.last = m.detach().cpu().numpy(); return s.r.decode(m)
@@ -290,7 +303,7 @@ class Renderer:
         PIECES = [_basetext(p) for p in padas]
         if not no_sandhi:
             PIECES = [_satva(x) for x in PIECES]
-        PIECES = [_danda_fix(_anusvara_m(x)) for x in PIECES]
+        PIECES = [_danda_fix(_anusvara_m(x, self._anusvara_policy)) for x in PIECES]
         PIECES = [_hna_metathesis(x) for x in PIECES]
         PIECES = [_vocalic_l(x) for x in PIECES]
 
