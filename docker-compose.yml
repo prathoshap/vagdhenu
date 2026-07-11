@@ -1,0 +1,46 @@
+# Vāgdhenu — Sanskrit Chant TTS API
+# GPU required (CUDA 12.1). Start:  docker compose up -d --build
+# Logs:      docker compose logs -f
+# Stop:      docker compose down
+services:
+  vagdhenu-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vagdhenu-api:latest
+    container_name: vagdhenu-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    # GPU passthrough (requires nvidia-container-toolkit on the host)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      # ── weights ────────────────────────────────────────────────────────────
+      # Defaults point to the bundled models/ dir (downloaded at build time).
+      # Override if you mount a host weights dir instead.
+      VAGDHENU_VOICE: /app/models/voice_steer_ema_2026-06-17.pt
+      VAGDHENU_VOC: /app/models/voc_bigvgan_EMA_2026-06-11.pth
+      VAGDHENU_HF: prathoshap/vagdhenu
+      # ── misc ───────────────────────────────────────────────────────────────
+      VAGDHENU_LAZY: "0"
+      PYTHONPATH: /app/BigVGAN
+    volumes:
+      # Mount a host models/ dir to skip the build-time download (faster rebuilds).
+      - ./models:/app/models:ro
+      # Persist HF cache across restarts (avoids re-downloading BigVGAN base weights).
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  hf-cache:

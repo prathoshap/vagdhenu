@@ -21,11 +21,14 @@ Developed and maintained by **Prof. Prathosh, Indian Institute of Science, Benga
 ## Layout
 ```
 src/         text frontend, meter detection, inference, post-gate, reference bank
-pipeline/    data-prep (cut→pair→train) + build/assemble/QC
+api/         FastAPI REST API + embedded web UI
 demo/        Gradio app (HF ZeroGPU)
 docs/        scrubbed technical report + frontend/pipeline references
 examples/    sample inputs + rendered outputs
 scripts/     env setup + weight download
+Dockerfile   CUDA 12.1 + Python 3.10 + uv + ffmpeg + BigVGAN + weights
+docker-compose.yml   GPU passthrough, healthcheck, HF cache volume
+deploy.sh    one-shot deploy (clone → inject → build → launch → health check)
 ```
 
 ## Install & quickstart
@@ -37,6 +40,58 @@ python src/render.py --shard examples/sample_shard.json --results /tmp/res.json 
 # -> out/sample_anushtubh.wav
 ```
 The batch renderer takes a shard JSON: `[{"id","meter","padas":[devanagari…],"seed","out"}]`. For one-off single-verse renders see `src/render_production.py`. `CHAMP_ROOT` env overrides the weights dir (default `models/`).
+
+## REST API + Docker deployment
+
+A FastAPI REST API wraps the model — POST a Sanskrit verse, get back an MP3.
+Includes an embedded web UI, Docker image, and a one-shot deploy script.
+
+### Endpoints
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/` | Web UI (HTML form + audio player) |
+| GET | `/api/health` | `{"status":"ok","model_loaded":true,"meters":18}` |
+| GET | `/api/meters` | List of available chandas meters |
+| POST | `/api/chant` | JSON in → MP3 bytes (`audio/mpeg`) |
+| POST | `/api/chant/json` | JSON in → JSON envelope (base64 MP3 + metadata) |
+
+### One-shot deploy (Docker)
+
+Prerequisites on the target server:
+- NVIDIA GPU + driver ≥ 525 (CUDA 12.1 compatible)
+- Docker + Docker Compose v2 + nvidia-container-toolkit
+
+```bash
+# Deploy on the GPU server itself:
+bash deploy.sh
+
+# Or from your local machine to a remote server:
+bash deploy.sh ubuntu@host -i key.pem
+```
+
+The script clones the repo, injects the API files, builds the Docker image,
+launches the container, and waits for the health check. First build takes
+~5–10 min (downloads torch cu121 + ML deps + model weights). Subsequent
+builds use Docker cache and are near-instant.
+
+### Manual Docker deploy
+
+```bash
+docker compose up -d --build     # build + launch
+docker compose logs -f           # watch logs
+docker compose down              # stop
+```
+
+### Environment variables
+
+All have sensible defaults — only override if needed. See `.env.example`.
+
+| Variable | Default | Description |
+|---|---|---|
+| `VAGDHENU_HF` | `prathoshap/vagdhenu` | Hugging Face repo for weight download |
+| `VAGDHENU_VOICE` | `models/voice_steer_ema_2026-06-17.pt` | Path to the DiT voice checkpoint |
+| `VAGDHENU_VOC` | `models/voc_bigvgan_EMA_2026-06-11.pth` | Path to the BigVGAN vocoder checkpoint |
 
 ## Case studies
 - **MBTN** (Mahābhārata Tātparya Nirṇaya) — 32-adhyāya *video* deliverable (Devanagari + Kannada karaoke, tanpura), shipped.

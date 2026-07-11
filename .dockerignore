@@ -1,0 +1,18 @@
+# Vágdhenu — Docker build ignore
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+models/
+out/
+*.wav
+*.mp3
+*.log
+.env
+.venv
+node_modules/
+demo/
+docs/
+training/
+examples/*.wav

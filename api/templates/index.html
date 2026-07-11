@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vāgdhenu — Sanskrit Chant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── dark theme (default) ────────────────────────────────── */
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --card-hover: #1c232c;
+    --accent: #d4a843;
+    --accent-hover: #e6bb4d;
+    --accent-dim: rgba(212,168,67,0.15);
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --border: #30363d;
+    --border-hover: #3d444d;
+    --input-bg: #0d1117;
+    --error: #f85149;
+    --btn-text: #1a1a1a;
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  /* ── sepia (light) theme ─────────────────────────────────── */
+  :root[data-theme="sepia"] {
+    --bg: #f4ecd8;
+    --card: #efe6cf;
+    --card-hover: #e8dcbe;
+    --accent: #8b6914;
+    --accent-hover: #a07d1a;
+    --accent-dim: rgba(139,105,20,0.12);
+    --text: #4a3c28;
+    --muted: #8a7a5e;
+    --border: #d4c9a8;
+    --border-hover: #c4b690;
+    --input-bg: #faf4e6;
+    --error: #b53a2e;
+    --btn-text: #faf4e6;
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238a7a5e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s, color 0.3s;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+
+  /* ── theme toggle ────────────────────────────────────────── */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    transition: border-color 0.2s, transform 0.15s;
+    z-index: 100;
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    transform: scale(1.08);
+  }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* ── header ──────────────────────────────────────────────── */
+  .header { text-align: center; margin-bottom: 36px; }
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+  .header h1 .sa {
+    color: var(--accent);
+    font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+  }
+  .header .sub {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-top: 6px;
+  }
+
+  /* ── card ────────────────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s, background 0.3s;
+  }
+  .card:hover { border-color: var(--border-hover); }
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── inputs ──────────────────────────────────────────────── */
+  textarea, select, input[type="number"] {
+    width: 100%;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 0.95rem;
+    font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+    transition: border-color 0.15s, background 0.3s;
+    outline: none;
+  }
+  textarea {
+    min-height: 130px;
+    resize: vertical;
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+  textarea:focus, select:focus, input:focus {
+    border-color: var(--accent);
+  }
+  select {
+    appearance: none;
+    background-image: var(--select-arrow);
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .hint code, .api code {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    color: var(--accent);
+  }
+
+  /* ── advanced ────────────────────────────────────────────── */
+  details { margin-top: 16px; }
+  summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    user-select: none;
+    padding: 8px 0;
+  }
+  summary:hover { color: var(--text); }
+  .row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .row > div { flex: 1; min-width: 180px; }
+
+  /* ── button ──────────────────────────────────────────────── */
+  button:not(.theme-toggle) {
+    background: var(--accent);
+    color: var(--btn-text);
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.15s, transform 0.05s;
+  }
+  button:not(.theme-toggle):hover { background: var(--accent-hover); }
+  button:not(.theme-toggle):active { transform: scale(0.98); }
+  button:not(.theme-toggle):disabled { opacity: 0.5; cursor: wait; }
+
+  /* ── status + audio ──────────────────────────────────────── */
+  .status {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--accent);
+    min-height: 1.2em;
+  }
+  .status .err { color: var(--error); }
+  .status b { font-weight: 600; }
+  audio {
+    width: 100%;
+    margin-top: 16px;
+    border-radius: var(--radius);
+  }
+
+  /* ── api card ────────────────────────────────────────────── */
+  .api h3 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .api p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* ── footer ──────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .footer a:hover { text-decoration: underline; }
+  .footer .dot { margin: 0 6px; opacity: 0.4; }
+
+  /* ── spinner ─────────────────────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--accent-dim);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+
+<div class="wrap">
+
+  <div class="header">
+    <h1>Vāgdhenu</h1>
+    <div class="sub">Paste a Sanskrit verse in any Indic script → get a chanted MP3. Meter is auto-detected.</div>
+  </div>
+
+  <div class="card">
+    <label for="text">Your verse — one shloka at a time</label>
+    <textarea id="text" placeholder="Paste a single Sanskrit verse in any Indian script…">वसुदेवसुतं देवं कंसचाणूरमर्दनम् ।
+देवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥</textarea>
+    <div class="hint">One shloka per chant · separate pādas with newlines or <code>।</code> / <code>॥</code></div>
+
+    <details>
+      <summary>Advanced (optional)</summary>
+      <div class="row">
+        <div>
+          <label for="meter">Meter (chandas)</label>
+          <select id="meter"><option value="">✨ Auto-detect</option></select>
+        </div>
+        <div>
+          <label for="seed">Seed (0–1000)</label>
+          <input id="seed" type="number" value="60" min="0" max="1000">
+        </div>
+      </div>
+    </details>
+
+    <button id="btn" onclick="chant()">🎧 Chant it</button>
+    <div class="status" id="status"></div>
+    <audio id="player" controls style="display:none"></audio>
+  </div>
+
+  <div class="card api">
+    <h3>REST API</h3>
+    <p>
+      <code>POST /api/chant</code> — JSON body <code>{"text":"…","seed":60}</code> → MP3 bytes<br>
+      <code>POST /api/chant/json</code> — same body → JSON envelope with base64 MP3 + metadata<br>
+      <code>GET /api/meters</code> — list of available meters
+    </p>
+  </div>
+
+  <div class="footer">
+    Voice &amp; method: <a href="https://huggingface.co/prathoshap/vagdhenu" target="_blank">prathoshap/vagdhenu</a>
+    <span class="dot">·</span>
+    <a href="https://github.com/prathoshap/vagdhenu" target="_blank">GitHub</a>
+    <span class="dot">·</span>
+    Apache-2.0
+  </div>
+
+</div>
+
+<script>
+const btn = document.getElementById('btn');
+const status = document.getElementById('status');
+const player = document.getElementById('player');
+const themeBtn = document.querySelector('.theme-toggle');
+
+// ── theme toggle (persisted in localStorage) ──────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const cur = html.getAttribute('data-theme');
+  const next = cur === 'sepia' ? 'dark' : 'sepia';
+  html.setAttribute('data-theme', next);
+  themeBtn.textContent = next === 'sepia' ? '☀' : '🌙';
+  localStorage.setItem('vagdhenu-theme', next);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('vagdhenu-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  themeBtn.textContent = saved === 'sepia' ? '☀' : '🌙';
+})();
+
+// ── load meter list ───────────────────────────────────────────
+fetch('/api/meters').then(r=>r.json()).then(d=>{
+  const sel = document.getElementById('meter');
+  (d.meters||[]).forEach(m=>{
+    const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o);
+  });
+}).catch(()=>{});
+
+// ── chant ─────────────────────────────────────────────────────
+async function chant(){
+  const text = document.getElementById('text').value.trim();
+  if(!text){ status.innerHTML='<span class="err">Please paste a verse first.</span>'; return; }
+  const meter = document.getElementById('meter').value || null;
+  const seed = parseInt(document.getElementById('seed').value||'60',10);
+  btn.disabled = true;
+  status.innerHTML = '<span class="spinner"></span>Chanting… (first run loads the model, ~30–60s)';
+  player.style.display = 'none';
+  try{
+    const res = await fetch('/api/chant',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, meter, seed})
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({detail:res.statusText}));
+      throw new Error(err.detail || 'rendering failed');
+    }
+    const meterName = decodeURIComponent(res.headers.get('X-Meter') || '?');
+    const dur = res.headers.get('X-Duration') || '?';
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    player.src = url; player.style.display = 'block'; player.play();
+    status.innerHTML = `🪔 Meter: <b>${meterName}</b> · ${dur}s`;
+  }catch(e){
+    status.innerHTML = '<span class="err">'+e.message+'</span>';
+  }finally{
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
