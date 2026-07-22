@@ -13,3 +13,8 @@ huggingface_hub
 indic-transliteration
 # bigvgan: NVIDIA's repo, cloned in scripts/setup.sh (not a pip package)
 # torch==2.4.1 torchaudio==2.4.1 (+cu121): installed in scripts/setup.sh (validated version)
+# --- API Dependencies ---
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
