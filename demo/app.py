@@ -12,6 +12,9 @@ Local run (with a real GPU + the weights downloaded):
 """
 import os, sys, json
 
+# MPS fallback for ops not yet natively implemented on Apple Silicon (e.g. istft).
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
 import gradio as gr
 import spaces
 
@@ -128,9 +131,13 @@ def _ensure_assets():
 def _get_renderer():
     global _RENDERER
     if _RENDERER is None:
+        import torch
         from render_core import Renderer
+        if torch.cuda.is_available():       _device = "cuda"
+        elif torch.backends.mps.is_available(): _device = "mps"
+        else:                               _device = "cpu"
         voice, voc, vocab = _ensure_assets()
-        _RENDERER = Renderer(voice, voc, BANK_PATH, device="cuda", vocab_file=vocab)
+        _RENDERER = Renderer(voice, voc, BANK_PATH, device=_device, vocab_file=vocab)
     return _RENDERER
 
 

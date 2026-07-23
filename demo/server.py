@@ -2,6 +2,9 @@
 Loads the model ONCE at startup and serves it — no ZeroGPU, no per-visitor quota wall.
 Guards: one shloka per request + 10 renders/IP/day (src/limits.py). Run in the `indicf5` env."""
 import os, sys, json
+
+# MPS fallback for ops not yet natively implemented on Apple Silicon (e.g. istft).
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "src")
 sys.path.insert(0, SRC)
@@ -18,7 +21,10 @@ AUTO  = "__auto__"
 NFE   = int(os.environ.get("VAGDHENU_NFE", "32"))
 
 print(f"[boot] loading model once  voice={VOICE}  nfe={NFE} …", flush=True)
-RENDERER = Renderer(VOICE, VOC, BANK, device="cuda", vocab_file=VOCAB, nfe=NFE)
+import torch as _torch
+_device = "cuda" if _torch.cuda.is_available() else "mps" if _torch.backends.mps.is_available() else "cpu"
+print(f"[boot] device={_device}", flush=True)
+RENDERER = Renderer(VOICE, VOC, BANK, device=_device, vocab_file=VOCAB, nfe=NFE)
 print("[boot] model warm, ready.", flush=True)
 
 _bank = json.load(open(BANK, encoding="utf-8"))
