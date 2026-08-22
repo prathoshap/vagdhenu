@@ -8,20 +8,32 @@ sys.path.insert(0, PROD)
 import prep_text as PT, bigvgan
 from f5_tts.infer.utils_infer import load_model, load_vocoder, infer_process, preprocess_ref_audio_text
 from f5_tts.model import DiT
+try:
+    from render_plan import n_aksharas as _plan_n_aksharas
+except Exception:
+    _plan_n_aksharas = None
 CHAMP = f"{PROD}/CHAMPION_2026-06-11"
 
 def n_aksharas(s):
-    """Count syllable nuclei (Devanagari/Kannada): independent vowels + consonants not followed by virama."""
+    """Count syllable nuclei (Devanagari/Kannada). Prefers render_plan (skips Vedic marks, counts ॐ)."""
+    if _plan_n_aksharas is not None:
+        return _plan_n_aksharas(s)
     n = 0; L = len(s)
     for i, c in enumerate(s):
         o = ord(c)
+        if o == 0x0950:
+            n += 1; continue
+        if (0x0951 <= o <= 0x0954) or (0x1CD0 <= o <= 0x1CFF):
+            continue
         indep = (0x0905 <= o <= 0x0914) or (0x0C85 <= o <= 0x0C94)
         cons  = (0x0915 <= o <= 0x0939) or (0x0C95 <= o <= 0x0CB9)
         if indep:
             n += 1
         elif cons:
             nxt = s[i+1] if i+1 < L else ""
-            if nxt not in ("\u094D", "\u0CCD"):  # not a virama -> carries a vowel
+            if nxt not in ("\u094D", "\u0CCD") and not (
+                nxt and ((0x0951 <= ord(nxt[0]) <= 0x0954) or (0x1CD0 <= ord(nxt[0]) <= 0x1CFF))
+            ):
                 n += 1
     return n
 
@@ -277,7 +289,7 @@ if a.meter:
         # NEAREST-METER fallback: pick the bank meter whose ref hemistich is closest in syllable count
         _meters = {k: v for k, v in _bank.items() if isinstance(v, dict) and "wav" in v and v.get("class") != "gadya"}
         try:
-            _pads = json.load(open(a.padas)); _vs = n_aksharas(PT.model_text(_pads[0]))
+            _pads = json.load(open(a.padas)); _vs = n_aksharas(PT.model_text(_pads[0])[0])
             _k, _e = min(_meters.items(), key=lambda kv: abs(n_aksharas(kv[1].get("ref_text", "")) - _vs))
             print(f"[meter] '{a.meter}' not in bank -> NEAREST meter '{_k}' ({_vs} vs {n_aksharas(_e.get('ref_text',''))} syll/segment)", flush=True)
         except Exception as _ex:
@@ -300,7 +312,9 @@ def _basetext(p):
     if a.raw: return p
     # internal word-boundary visarga sandhi (utva/rutva/lopa) matches the training texts; segment-final
     # visarga preserved (echo_final=False) for _danda_fix. No-op on already-resolved inputs.
-    return PT.model_text_sandhi(p, echo_final=False) if not a.no_sandhi else PT.model_text(p)
+    # model_text* returns (kannada_text, accent_array); TTS path uses phonemes only.
+    kn, _acc = PT.model_text_sandhi(p, echo_final=False) if not a.no_sandhi else PT.model_text(p)
+    return kn
 _RAWPADAS = json.load(open(a.padas))
 FRIC_ONSET = bool(_RAWPADAS) and (PT.align_slp1(_RAWPADAS[0])[:1] in ("S", "z", "s", "h"))   # ś/ṣ/s/h clip onset
 PIECES = [_basetext(p) for p in _RAWPADAS]

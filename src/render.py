@@ -8,17 +8,28 @@ HERE = os.path.dirname(os.path.abspath(__file__))     # src/  (prep_text.py sits
 REPO = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import prep_text as PT, bigvgan
+try:
+    from render_plan import n_aksharas as _plan_n_aksharas, has_vedic_marks as _has_vedic_marks
+except Exception:
+    _plan_n_aksharas = None
+    _has_vedic_marks = lambda _t: False
 from f5_tts.infer.utils_infer import load_model, load_vocoder, infer_process, preprocess_ref_audio_text
 from f5_tts.model import DiT
 CHAMP = os.environ.get("CHAMP_ROOT", os.path.join(REPO, "models"))   # weights land here (scripts/download_weights.py)
 SR = 24000
 FALLBACK_METER = "vasantatilaka"   # unknown/unmatched vṛtta -> this reference instead of erroring (see get_ref)
 
-# ── helpers copied VERBATIM from render_production.py ──────────────────────────────────
+# ── helpers (n_aksharas: prefer render_plan — skips Vedic marks, counts ॐ) ─────────────
 def n_aksharas(s):
+    if _plan_n_aksharas is not None:
+        return _plan_n_aksharas(s)
     n = 0; L = len(s)
     for i, c in enumerate(s):
         o = ord(c)
+        if o == 0x0950:
+            n += 1; continue
+        if (0x0951 <= o <= 0x0954) or (0x1CD0 <= o <= 0x1CFF):
+            continue
         indep = (0x0905 <= o <= 0x0914) or (0x0C85 <= o <= 0x0C94)
         cons  = (0x0915 <= o <= 0x0939) or (0x0C95 <= o <= 0x0CB9)
         if indep:
@@ -242,7 +253,9 @@ def render_clip(clip):
         ref_audio, ref_t = preprocess_ref_audio_text(clip["ref_wav"], clip.get("ref_text", ""), clip_short=True)
         _rab, _srb = _ta.load(ref_audio); ref_len = _rab.shape[-1] / _srb
     def _basetext(p):
-        return PT.model_text_sandhi(p, echo_final=False) if not no_sandhi else PT.model_text(p)
+        # model_text* returns (kannada_text, accent_array); TTS path uses phonemes only.
+        kn, _acc = PT.model_text_sandhi(p, echo_final=False) if not no_sandhi else PT.model_text(p)
+        return kn
     PIECES = [_basetext(p) for p in clip["padas"]]
     if not no_sandhi:
         PIECES = [_satva(x) for x in PIECES]

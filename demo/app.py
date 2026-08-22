@@ -145,6 +145,45 @@ def _render(text, used, seed):
     return _get_renderer().render_one(text, used, seed=int(seed))
 
 
+def plan_only(text, meter_choice, seed, request: gr.Request):
+    """Dry-run / noop: full text frontend manifest, no GPU, no quota burn."""
+    text = (text or "").strip()
+    if not text:
+        raise gr.Error("Please paste a verse first 🙏")
+    msg = limits.validate_one_shloka(text)
+    if msg:
+        raise gr.Error(msg)
+    from render_plan import plan_render
+    meter = None if meter_choice == AUTO or not meter_choice else meter_choice
+    plan = plan_render(text, meter=meter, no_sandhi=True, bank_path=BANK_PATH, seed=int(seed))
+    warn = limits.vedic_noop_warning(text)
+    if warn:
+        plan.setdefault("warnings", []).append(warn)
+    m = plan["meter"]
+    lines = [
+        f"🗺️ **Dry-run / noop** (no audio, quota unused — "
+        f"{limits.peek_count(limits.client_ip(request))}/{limits.DAILY_LIMIT} renders used today)",
+        f"- Meter: **{m['resolved']}** ({m['source']}"
+        + (f", detected `{m['detected']}`" if m.get("detected") else "") + ")",
+        f"- Pādas: **{plan['n_padas']}** · syllables: **{plan['total_syllables']}** · "
+        f"vedic accents: **{'yes' if plan['vedic_input'] else 'no'}**",
+        f"- Accents drive audio: **{plan['accents_drive_audio']}** "
+        f"(prosody would be `{plan['audio_prosody']}`)",
+        f"- Est. duration: **~{plan['estimate']['total_dur_s_est']}s** (sans reference clip)",
+    ]
+    for i, p in enumerate(plan["pieces"]):
+        marked = p["n_accents_marked"]
+        lines.append(
+            f"- Pāda {i + 1}: `{p['kannada']}` · {p['n_syll']} syll · "
+            f"{marked} accent marks · align={'✓' if p['align_ok'] else '✗'}"
+        )
+    for w in plan.get("warnings") or []:
+        lines.append(f"- ⚠️ {w}")
+    if not plan.get("ok"):
+        lines.append("- ❌ Plan reported issues — fix input before chanting.")
+    return "\n".join(lines)
+
+
 def synthesize(text, meter_choice, seed, request: gr.Request):
     # validation + per-IP quota run OFF the GPU so abuse/rejects cost no compute
     text = (text or "").strip()
@@ -164,6 +203,9 @@ def synthesize(text, meter_choice, seed, request: gr.Request):
                        f"Tip: paste the *complete* verse, or pick the meter under Advanced.")
     else:
         used, status = meter_choice, f"🪔 Meter: **{meter_choice}**"
+    vw = limits.vedic_noop_warning(text)
+    if vw:
+        status += f"\n\n⚠️ {vw}"
     try:
         sr, audio = _render(text, used, seed)
     except Exception as e:
@@ -205,11 +247,14 @@ with gr.Blocks(title="Vāgdhenu — Sanskrit chant", theme=gr.themes.Soft()) as 
                                     info="Leave on Auto-detect unless you know the meter.")
                 seed = gr.Slider(0, 1000, value=60, step=1, label="Seed",
                                  info="Change for a different take of the same verse.")
-            btn = gr.Button("🎧 Chant it", variant="primary", size="lg")
+            with gr.Row():
+                btn = gr.Button("🎧 Chant it", variant="primary", size="lg")
+                btn_plan = gr.Button("🗺️ Plan only (dry-run)", variant="secondary", size="lg")
         with gr.Column(scale=2):
             out = gr.Audio(label="Chant", type="numpy", autoplay=False)
             status = gr.Markdown("")
     btn.click(synthesize, inputs=[txt, meter, seed], outputs=[out, status])
+    btn_plan.click(plan_only, inputs=[txt, meter, seed], outputs=[status])
     gr.Markdown("### 📜 Sample shlokas — click one to load it, then press **Chant it**\n"
                 "Or pick any verse from the **[Bhagavad Gītā](https://sanskritdocuments.org/doc_giitaa/bhagvadnew.html)** "
                 "and paste it above.")

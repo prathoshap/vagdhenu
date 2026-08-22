@@ -45,7 +45,7 @@ def gate(au,voice=0.08,sil=0.012,fin=0.015,fout=0.040,lead=0.03,keep=0.06):
     return out
 ref_text=open(a.ref_text_file,encoding="utf-8").read().strip()
 ref_audio,ref_t=preprocess_ref_audio_text(a.ref_wav,ref_text)
-PIECES=[PT.model_text(p) for p in json.load(open(a.padas))]
+PIECES=[PT.model_text(p)[0] for p in json.load(open(a.padas))]  # (kannada, accent_array)
 for i,p in enumerate(PIECES):
     for k in range(a.K):
         torch.manual_seed(7000+i*131+k*17)

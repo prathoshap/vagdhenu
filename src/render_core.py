@@ -15,28 +15,17 @@ import os, sys, glob, json, re, numpy as np, torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import prep_text as PT  # noqa: E402
+from render_plan import (  # noqa: E402
+    n_aksharas, split_padas, detect_meter_key, plan_render, FALLBACK_METER,
+    strip_vedic_marks, has_vedic_marks,
+)
 
 SR = 24000
 # Unknown/unmatched vṛtta -> render against this meter's reference rather than erroring. An
 # unrecognized verse is almost always a real metered vṛtta we failed to classify, so a flowing
 # 14-syllable triṣṭubh-class reference generalizes better than crashing (or the flat gadya prose
 # template). Resolves via the wav-stem alias in the bank LUT.
-FALLBACK_METER = "vasantatilaka"
-
-# ── helpers copied VERBATIM from render.py ───────────────────────────────────────────────
-def n_aksharas(s):
-    n = 0; L = len(s)
-    for i, c in enumerate(s):
-        o = ord(c)
-        indep = (0x0905 <= o <= 0x0914) or (0x0C85 <= o <= 0x0C94)
-        cons  = (0x0915 <= o <= 0x0939) or (0x0C95 <= o <= 0x0CB9)
-        if indep:
-            n += 1
-        elif cons:
-            nxt = s[i+1] if i+1 < L else ""
-            if nxt not in ("्", "್"):
-                n += 1
-    return n
+# FALLBACK_METER imported from render_plan (single source of truth).
 
 def _aksharas(s):
     out=[]; cur=""
@@ -166,44 +155,7 @@ def _ends_halant(txt):
     return len(t) > 0 and t[-1] in _VIRAMA
 
 _DANDAS = "।॥|"
-def split_padas(text):
-    """Split a free-text shloka into hemistich/pada pieces: newlines first, then dandas. Empty drop."""
-    pieces = []
-    for line in text.replace("॥", "।").replace("|", "।").splitlines():
-        for seg in line.split("।"):
-            seg = seg.strip()
-            if seg: pieces.append(seg)
-    return pieces or ([text.strip()] if text.strip() else [])
-
-
-def detect_meter_key(text):
-    """Best-effort chandas (meter) detection from raw text in ANY Indic script, so a non-technical
-    user need not name the meter. Returns the detected meter name (e.g. 'anushtubh', 'vasantatilaka')
-    which the bank LUT resolves via its wav-stem aliases; 'anushtubh_half' is normalized to
-    'anushtubh'. Returns "" when the verse is partial/unrecognized — the caller then picks the
-    graceful FALLBACK_METER itself and can tell the user it was a guess. Pure text — no GPU. Needs a
-    COMPLETE verse (4 pādas, or 32 syllables for anuṣṭubh) for a confident vṛtta match."""
-    try:
-        from indic_transliteration import sanscript
-        from tts_syllabify import syllabify
-        from tts_weight import tag_weights
-        from tts_meter import detect_meter
-    except Exception:
-        return ""
-    try:
-        d = PT.to_deva(text).replace("॥", "|").replace("।", "|").replace("\n", " | ")
-        d = "".join(c for c in d if not (c.isdigit() or ("०" <= c <= "९")) and c not in "\"'“”‘’()")
-        slp = re.sub(r"\s+", " ", sanscript.transliterate(d, sanscript.DEVANAGARI, sanscript.SLP1)).strip()
-        syls = syllabify(slp)
-        tag_weights(syls)
-        name = detect_meter(syls).get("name", "unknown")
-    except Exception:
-        return ""
-    if name in ("anushtubh_half", "anushtubh"):
-        return "anushtubh"
-    if name in ("unknown", None, ""):
-        return ""
-    return name
+# split_padas / detect_meter_key: imported from render_plan (strips Vedic marks; counts ॐ).
 
 
 class Renderer:
@@ -306,8 +258,14 @@ class Renderer:
         spd = float(speed) if speed is not None else self.speed
 
         def _basetext(p):
-            return PT.model_text_sandhi(p, echo_final=False) if not no_sandhi else PT.model_text(p)
+            # model_text* returns (kannada_text, accent_array); audio path uses phonemes only.
+            # Accents are available via plan_render() dry-run; F5 has no pitch head to consume them.
+            kn, _acc = PT.model_text_sandhi(p, echo_final=False) if not no_sandhi else PT.model_text(p)
+            return kn
         PIECES = [_basetext(p) for p in padas]
+        if has_vedic_marks(text if isinstance(text, str) else " ".join(padas)):
+            print("[svara] Vedic accents stripped for IndicF5; prosody will be classical chant "
+                  "(use render_plan.plan_render for accent metadata).", flush=True)
         if not no_sandhi:
             PIECES = [_satva(x) for x in PIECES]
         PIECES = [_danda_fix(_visarga_ksha(_anusvara_m(x))) for x in PIECES]

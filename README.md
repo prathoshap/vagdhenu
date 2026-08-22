@@ -16,20 +16,21 @@ Developed and maintained by **Prof. Prathosh, Indian Institute of Science, Benga
 - **Backbone:** IndicF5 / F5-TTS — a flow-matching **DiT** (OT-CFM mel-infilling, ~337M params, *no* native duration or pitch head). Sanskrit is routed through **Kannada script** (Devanagari triggers Hindi schwa-deletion).
 - **Vocoder:** NVIDIA **BigVGAN-v2**, fine-tuned on F5 vocos-mel (mandatory — vocos shivers on long vowels).
 - **Prosody:** F5's content fidelity is bulletproof but its prosody is *text-driven, not designable*. The working levers are **the reference clip** (voice + swara + pace, via the *half-reference rule*) and a **voice-steering fine-tune**. (See `docs/TECH_REPORT.md` §14 for the full account — this is the central architectural finding.)
-- **Text frontend (`src/prep_text.py`)** — the most reusable piece: Deva→SLP1→Kannada routing, internal visarga sandhi (utva/rutva/lopa/satva), homorganic anusvāra, vocalic-ṝ handling, daṇḍa-final rules, meter/gaṇa (L/G) detection.
+- **Text frontend (`src/prep_text.py`)** — the most reusable piece: Deva→SLP1→Kannada routing, internal visarga sandhi (utva/rutva/lopa/satva), homorganic anusvāra, vocalic-ṝ handling, daṇḍa-final rules, meter/gaṇa (L/G) detection. Vedic pitch marks (U+0952 anudātta, U+0951 RV svarita stroke, Vedic Extensions) are stripped before Kannada routing and returned as a parallel `accent_array` aligned 1:1 with gaṇa syllables (remapped through sandhi). **Audio remains classical śāstra chant** (`accents_drive_audio=False`); use `render_plan.plan_render` / `scripts/dry_run_render.py` for a GPU-free manifest.
 
 ## Layout
 ```
-src/         text frontend, meter detection, inference, post-gate, reference bank
+src/         text frontend, meter detection, render plan (noop), inference, reference bank
 pipeline/    data-prep (cut→pair→train) + build/assemble/QC
-demo/        Gradio app (HF ZeroGPU)
+demo/        Gradio app (HF ZeroGPU) — includes Plan only (dry-run)
 docs/        scrubbed technical report + frontend/pipeline references
-examples/    sample inputs + rendered outputs
-scripts/     env setup + weight download
+examples/    sample inputs (+ vedic_four_vedas_shard.json)
+scripts/     env setup, weight download, dry_run_render, eval helpers
+tests/       frontend unit tests (no GPU)
 ```
 
 ## Install & quickstart
-Requires **Python 3.10** and a **CUDA 12.1 GPU**.
+Requires **Python 3.10** and a **CUDA 12.1 GPU** for audio render.
 ```bash
 bash scripts/setup.sh    # torch+cu121, deps, BigVGAN, and downloads weights -> models/
 # render a Devanagari verse (+ meter) to a chanted wav:
@@ -37,6 +38,17 @@ python src/render.py --shard examples/sample_shard.json --results /tmp/res.json 
 # -> out/sample_anushtubh.wav
 ```
 The batch renderer takes a shard JSON: `[{"id","meter","padas":[devanagari…],"seed","out"}]`. For one-off single-verse renders see `src/render_production.py`. `CHAMP_ROOT` env overrides the weights dir (default `models/`).
+
+### Text API note (breaking)
+`model_text` / `model_text_sandhi` / `model_text_norm` return **`(kannada_text, accent_array)`**. Unpack or index `[0]` for the phoneme string used by IndicF5. `accent_array[i]` aligns with syllable `i` in `chandas_labeler.scan` / `syllabify_slp1`.
+
+### Dry-run / noop (no GPU)
+```bash
+pip install indic-transliteration   # minimal frontend dep
+python scripts/dry_run_render.py --veda-samples
+python scripts/dry_run_render.py --text "अ॒ग्निमी॑ळे पुरोहितं ..." -o plan.json
+python -m pytest tests/test_svara_prep.py -q
+```
 
 ## Case studies
 - **MBTN** (Mahābhārata Tātparya Nirṇaya) — 32-adhyāya *video* deliverable (Devanagari + Kannada karaoke, tanpura), shipped.

@@ -12,3 +12,7 @@ __pycache__/
 BigVGAN/
 demo/BigVGAN/
 !src/reference_bank/*.wav
+
+# Generated dry-run / eval manifests (regenerate with scripts/)
+examples/vedic_four_vedas_plan.json
+examples/vedic_frontend_eval.json
