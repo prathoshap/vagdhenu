@@ -4,12 +4,19 @@ __pycache__/
 *.pth
 *.safetensors
 *.wav
+*.mp3
 *.mp4
 *.m4a
 !examples/**/*.wav
+!examples/**/*.mp3
 .DS_Store
 .claude/
+.idea/
 out/
+# rendered corpora — the atomic MP3s stay local; per-corpus glue lives on its own branch.
+outputs/
+# per-corpus glue scripts land here (see the `ganapati` branch for an example).
+ganapati/
 # local scratch: session notes, working inputs, one-off renders
 tmp/
 # weight download target (scripts/download_weights.py)
