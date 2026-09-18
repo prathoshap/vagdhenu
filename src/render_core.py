@@ -7,13 +7,16 @@ this module exists so the Gradio demo (and any interactive caller) can load the 
 render single inputs without argparse / file I/O.
 
 Usage:
-    r = Renderer(voice_path, voc_path, bank_path, device="cuda")
+    r = Renderer(voice_path, voc_path, bank_path)   # device auto-detected: cuda / mps / cpu
     sr, audio = r.render_one("तस्मै नमः ...", meter="anuṣṭubh")
 """
-import os, sys, glob, json, re, numpy as np, torch
+import os, sys, glob, json, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+from device import pick_device  # noqa: E402  — MUST precede `import torch` (arms the MPS fallback)
+
+import numpy as np, torch  # noqa: E402
 import prep_text as PT  # noqa: E402
 
 SR = 24000
@@ -209,12 +212,12 @@ def detect_meter_key(text):
 class Renderer:
     """Loads DiT + vocos + BigVGAN + the reference bank ONCE; render_one() synthesizes a single input."""
 
-    def __init__(self, voice_path, voc_path, bank_path, device="cuda", vocab_file=None,
+    def __init__(self, voice_path, voc_path, bank_path, device=None, vocab_file=None,
                  speed=0.90, nfe=64, cfg=3.0, gap=0.55, gap_halant=0.20):
         import bigvgan
         from f5_tts.infer.utils_infer import load_model, load_vocoder, preprocess_ref_audio_text
         from f5_tts.model import DiT
-        self.device = device
+        self.device = device or pick_device()
         self.speed = speed; self.nfe = nfe; self.cfg = cfg
         self.gap = gap; self.gap_halant = gap_halant
         self._preprocess = preprocess_ref_audio_text
@@ -230,7 +233,7 @@ class Renderer:
         vocab = next((v for v in _cands if v and os.path.exists(v)), None)
         if vocab is None:
             raise FileNotFoundError("vocab.txt not found (pass vocab_file= or ship it beside bank.json)")
-        self.cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=device)
+        self.cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=self.device)
         ck = torch.load(voice_path, map_location="cpu", weights_only=True)
         ema = {k.replace("ema_model.", ""): v for k, v in ck["ema_model_state_dict"].items()
                if k not in ("initted", "step")}
@@ -244,7 +247,7 @@ class Renderer:
 
         g = bigvgan.BigVGAN.from_pretrained("nvidia/bigvgan_v2_24khz_100band_256x", use_cuda_kernel=False)
         bsd = torch.load(voc_path, map_location="cpu"); bsd = bsd.get("model", bsd)
-        g.load_state_dict(bsd); g.remove_weight_norm(); g = g.to(device).eval()
+        g.load_state_dict(bsd); g.remove_weight_norm(); g = g.to(self.device).eval()
         for p in g.parameters(): p.requires_grad = False
         self.g = g
 

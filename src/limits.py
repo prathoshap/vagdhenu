@@ -1,11 +1,15 @@
 """Abuse guards shared by the demo server (ece) and the HF Space:
  - one shloka per request (block bulk paste / bulk download)
  - a per-IP daily render quota
-Pure-stdlib, in-memory (resets on process restart — fine for a public demo)."""
-import threading, datetime
+Pure-stdlib, in-memory (resets on process restart — fine for a public demo).
 
-DAILY_LIMIT  = 10    # renders per IP per day
-MAX_AKSHARAS = 100   # one verse: longest common vṛtta (sragdharā) is 84 syllables; >100 = multiple shlokas
+Both caps are env-overridable. Set the env var to 0 to disable the corresponding check —
+useful when running demo/server.py locally on your own machine for personal use, where the
+per-IP daily quota just gates *you* against yourself."""
+import os, threading, datetime
+
+DAILY_LIMIT  = int(os.environ.get("VAGDHENU_DAILY_LIMIT", "10"))    # renders per IP per day (0 = unlimited)
+MAX_AKSHARAS = int(os.environ.get("VAGDHENU_MAX_AKSHARAS", "100"))  # one verse — sragdharā is 84 syllables (0 = unlimited)
 
 _lock = threading.Lock()
 _counts = {}  # ip -> [date_iso, count]
@@ -45,19 +49,20 @@ def validate_one_shloka(text):
     t = (text or "").replace("।।", "॥")
     if t.count("॥") >= 2:
         return "Please enter just one shloka at a time 🙏"
-    if _n_aksharas(text) > MAX_AKSHARAS:
+    if MAX_AKSHARAS and _n_aksharas(text) > MAX_AKSHARAS:
         return "That looks longer than one shloka — please paste a single verse 🙏"
     return None
 
 
 def check_and_count(ip):
-    """True if under today's limit (and records the use); False if the daily quota is exhausted."""
+    """True if under today's limit (and records the use); False if the daily quota is exhausted.
+    DAILY_LIMIT=0 disables the cap and always returns True (still records the count for logging)."""
     today = datetime.date.today().isoformat()
     with _lock:
         rec = _counts.get(ip)
         if not rec or rec[0] != today:
             rec = [today, 0]; _counts[ip] = rec
-        if rec[1] >= DAILY_LIMIT:
+        if DAILY_LIMIT and rec[1] >= DAILY_LIMIT:
             return False
         rec[1] += 1
         return True

@@ -1,4 +1,5 @@
-# Python 3.10. Install torch separately with CUDA (see scripts/setup.sh), then: pip install -r requirements.txt
+# Python 3.10. Install torch first (scripts/setup.sh: cu121 on Linux, plain PyPI arm64 on macOS),
+# then: pip install -r requirements.txt
 # f5_tts is IndicF5's own variant (Indic fork of F5-TTS), installed from its public GitHub at the exact
 # commit used in production — NOT the PyPI `f5-tts` package (different code; its infer_process crashes).
 git+https://github.com/ai4bharat/IndicF5.git@13f7c4d627cc10111aea8fe9c0039462cacacdc7
@@ -9,7 +10,25 @@ x-transformers==2.19.7
 numpy==1.26.4
 librosa==0.11.0
 soundfile
-huggingface_hub
+# huggingface_hub is pinned below 1.0 because transformers==4.46.3 and tokenizers==0.20.3 both
+# require it. Newer gradio can pull in hub 1.x transitively; this pin holds the stack together.
+huggingface_hub<1.0
 indic-transliteration
+# gradio: for the local warm server at demo/server.py. <5.0 keeps compatibility with
+# huggingface_hub<1.0 (gradio 5.x depends on hub 1.x). Small (~40 MB) and pure-Python, so it
+# stays in the base requirements. demo/app.py's HF Space uses gradio too but pulls it from the
+# Space SDK, not this file (see demo/requirements.txt).
+gradio<5.0
+# starlette<1.0 because gradio 4.x expects starlette ~0.38; a fresh install can transitively pull
+# starlette 1.x via fastapi>=0.140, which breaks jinja2 template rendering deep in the launch
+# path with "unhashable type: 'dict'". Symptom is Gradio's post-launch localhost self-check
+# raising ValueError even though the boot line printed.
+starlette<1.0
+# pydantic<2.10 because gradio_client 1.3.0 (bundled with gradio 4.44) chokes on
+# `additionalProperties: True` in the OpenAPI schema (it expects a dict, not a bool). Pydantic 2.10
+# switched to emitting the bool form for `Any` fields. Without this pin GET / returns 500 on
+# demo/server.py even after the server binds, because Gradio calls api_info() during page render.
+pydantic<2.10
 # bigvgan: NVIDIA's repo, cloned in scripts/setup.sh (not a pip package)
-# torch==2.4.1 torchaudio==2.4.1 (+cu121): installed in scripts/setup.sh (validated version)
+# torch==2.4.1 torchaudio==2.4.1: installed in scripts/setup.sh (validated version).
+# +cu121 on Linux; on Apple Silicon the stock PyPI wheel carries the Metal (MPS) backend.

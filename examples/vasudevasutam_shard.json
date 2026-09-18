@@ -1,0 +1,13 @@
+[
+  {
+    "id": "vasudevasutam",
+    "meter": "anushtubh",
+    "padas": [
+      "वसुदेवसुतं देवं कंसचाणूरमर्दनम्",
+      "देवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम्"
+    ],
+    "seed": 60,
+    "no_sandhi": true,
+    "out": "out/vasudevasutam.wav"
+  }
+]

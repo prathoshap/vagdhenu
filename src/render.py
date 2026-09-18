@@ -3,10 +3,13 @@ Faithful port of render_production.py's gold per-piece pipeline (helpers copied 
 change is structural: model loaded once, render_clip() called per clip with a per-clip seed.
 Writes DRY hemistich wavs (tanpura/assembly happen later in postaudio).
 shard JSON: [{"id","meter","padas":[deva,...],"seed":60,"no_sandhi":true,"out":"/abs/clip.wav"}]"""
-import os, sys, glob, json, argparse, numpy as np, soundfile as sf, torch
+import os, sys, glob, json, argparse
 HERE = os.path.dirname(os.path.abspath(__file__))     # src/  (prep_text.py sits beside this file)
 REPO = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
+from device import pick_device, describe   # MUST precede `import torch` (arms the MPS fallback)
+
+import numpy as np, soundfile as sf, torch
 import prep_text as PT, bigvgan
 from f5_tts.infer.utils_infer import load_model, load_vocoder, infer_process, preprocess_ref_audio_text
 from f5_tts.model import DiT
@@ -178,7 +181,9 @@ _vocab_cands = [os.path.join(CHAMP, "vocab.txt"), os.path.join(HERE, "reference_
 vocab = next((v for v in _vocab_cands if v and os.path.exists(v)), None)
 if vocab is None:
     raise SystemExit("vocab.txt not found — run scripts/download_weights.py")
-cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device="cuda")
+DEVICE = pick_device()
+print(f"[device] {describe(DEVICE)}", flush=True)
+cfm = load_model(DiT, CFG, mel_spec_type="vocos", vocab_file=vocab, device=DEVICE)
 ck = torch.load(a.voice, map_location="cpu", weights_only=True)
 ema = {k.replace("ema_model.", ""): v for k, v in ck["ema_model_state_dict"].items() if k not in ("initted", "step")}
 cfm.load_state_dict(ema, strict=False); cfm.eval()
@@ -189,10 +194,10 @@ class Cap:
 cap = Cap(real_voc)
 g = bigvgan.BigVGAN.from_pretrained("nvidia/bigvgan_v2_24khz_100band_256x", use_cuda_kernel=False)
 bsd = torch.load(a.voc, map_location="cpu"); bsd = bsd.get("model", bsd)
-g.load_state_dict(bsd); g.remove_weight_norm(); g = g.cuda().eval()
+g.load_state_dict(bsd); g.remove_weight_norm(); g = g.to(DEVICE).eval()
 for p in g.parameters(): p.requires_grad = False
 def bvgan(mel):
-    m = torch.from_numpy(mel).cuda()
+    m = torch.from_numpy(mel).to(DEVICE)
     with torch.no_grad():
         if m.dim()==3 and m.shape[1]!=100 and m.shape[2]==100: m = m.transpose(1,2)
         return g(m).squeeze().cpu().numpy().astype(np.float32)
@@ -278,7 +283,7 @@ def render_clip(clip):
         for att in range(4):
             torch.manual_seed(seed + att)
             _fixd = (ref_len + NSYLL[i]*sps) if (sps > 0 and NSYLL) else None
-            w, sr, _ = infer_process(_ra, _rt, p, cfm, cap, mel_spec_type="vocos", speed=spd, nfe_step=a.nfe, cfg_strength=a.cfg, device="cuda", fix_duration=_fixd)
+            w, sr, _ = infer_process(_ra, _rt, p, cfm, cap, mel_spec_type="vocos", speed=spd, nfe_step=a.nfe, cfg_strength=a.cfg, device=DEVICE, fix_duration=_fixd)
             w = np.array(w, dtype=np.float32)
             if np.abs(w).max() > 1.5: w = w/32768.0
             if float(np.sqrt((w**2).mean())) > 0.04: au = w; break

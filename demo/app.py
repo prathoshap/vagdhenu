@@ -7,13 +7,10 @@ load + synthesis run inside an @spaces.GPU function so ZeroGPU allocates a GPU o
 Designed to be usable by a non-technical user: paste a verse, press one button. The meter is
 auto-detected; the only knob (a random seed) is hidden under "Advanced".
 
-Local run (with a real GPU + the weights downloaded):
+Local run (CUDA GPU, Apple Metal, or CPU — auto-detected; weights downloaded):
     VAGDHENU_HF=prathoshap/vagdhenu python demo/app.py
 """
 import os, sys, json
-
-import gradio as gr
-import spaces
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # works both in-repo (demo/app.py -> ../src) and in a flattened Space (app.py + ./src)
@@ -21,8 +18,13 @@ SRC = next((p for p in (os.path.join(os.path.dirname(HERE), "src"), os.path.join
             if os.path.exists(os.path.join(p, "render_core.py"))), os.path.join(HERE, "src"))
 sys.path.insert(0, SRC)
 
-from huggingface_hub import hf_hub_download
-import limits
+import device as _device   # noqa: F401,E402 — MUST precede torch, which `spaces` imports at load
+
+import gradio as gr  # noqa: E402
+import spaces  # noqa: E402
+
+from huggingface_hub import hf_hub_download  # noqa: E402
+import limits  # noqa: E402
 
 
 def _ensure_bigvgan():
@@ -130,7 +132,7 @@ def _get_renderer():
     if _RENDERER is None:
         from render_core import Renderer
         voice, voc, vocab = _ensure_assets()
-        _RENDERER = Renderer(voice, voc, BANK_PATH, device="cuda", vocab_file=vocab)
+        _RENDERER = Renderer(voice, voc, BANK_PATH, vocab_file=vocab)   # device auto-detected
     return _RENDERER
 
 
