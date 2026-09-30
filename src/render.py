@@ -169,6 +169,7 @@ ap.add_argument("--voc", default=f"{CHAMP}/voc_bigvgan_EMA_2026-06-11.pth")
 ap.add_argument("--speed", type=float, default=0.90); ap.add_argument("--nfe", type=int, default=64)
 ap.add_argument("--cfg", type=float, default=3.0); ap.add_argument("--gap", type=float, default=0.55)
 ap.add_argument("--gap_halant", type=float, default=0.20)
+ap.add_argument("--skip_existing", action="store_true", help="resume: skip clips whose output wav already exists")
 a = ap.parse_args()
 
 CFG = dict(dim=1024, depth=22, heads=16, ff_mult=2, text_dim=512, conv_layers=4)
@@ -292,17 +293,23 @@ def render_clip(clip):
     fric = bool(_slp) and _slp[0] in ("S", "z", "s", "h")   # ś/ṣ/s/h onset -> fricative-aware gate
     halant = _ends_halant(PIECES[-1])                       # त्/क्/प् final -> preserve stop burst
     final = _stitch(bseg, GAPS, fric=fric, halant=halant)
-    sf.write(out, final, SR)
+    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
+    tmp = f"{out}.{os.getpid()}.part.wav"      # per-process temp name: parallel workers may render the same clip
+    sf.write(tmp, final, SR); os.replace(tmp, out)   # atomic: no half-written wav to skip on resume
     return {"id": clip["id"], "dur": round(len(final)/SR, 3), "pieces": len(PIECES), "seed": seed, "out": out}
 
 clips = json.load(open(a.shard, encoding="utf-8"))
 print(f"[batch] {len(clips)} clips, model loaded", flush=True)
 results = []
 for clip in clips:
+    out = os.path.join(a.outdir, clip["id"] + ".wav") if a.outdir else clip["out"]
+    if a.skip_existing and os.path.exists(out):
+        results.append({"id": clip["id"], "out": out, "skipped": True}); print(f"SKIP {clip['id']}", flush=True); continue
     try:
         r = render_clip(clip); results.append(r); print(f"OK {r['id']} {r['dur']}s seed{r['seed']}", flush=True)
     except Exception as e:
         results.append({"id": clip["id"], "error": str(e)}); print(f"FAIL {clip['id']} {e}", flush=True)
+    json.dump(results, open(a.results, "w"), ensure_ascii=False, indent=1)   # checkpoint every clip
 json.dump(results, open(a.results, "w"), ensure_ascii=False, indent=1)
 ok = sum(1 for r in results if "error" not in r)
 print(f"[batch] DONE {ok}/{len(clips)} FAIL={len(clips)-ok}", flush=True)
