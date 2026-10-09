@@ -125,32 +125,59 @@ def _vocalic_l(s):
     like कृ ('kru'). Confirmed by ear on v043 अचीकॢपत् -> अचीक्लृपत्."""
     return s.replace("ೢ", "್ಲೃ").replace("ೣ", "್ಲೄ").replace("ಌ", "ಲೃ").replace("ೡ", "ಲೄ")
 
-def gate(au, voice=0.08, sil=0.012, fin=0.015, fout=0.040, lead=0.03, keep=0.06, fade=True, fric=False, halant=False):
-    """Trim F5 padding-silence/edge-artifacts to tight speech bounds (+ click-fades). fric=True (clip
-    starts with ś/ṣ/s/h): keep the low-energy leading fricature (low onset floor, no fade-in). halant=True
-    (clip ENDS in a pure consonant त्/क्/प्): the final unvoiced stop is a weak burst after a closure, so
-    the standard 0.035 offset detector cuts it -> low trailing floor + more keep + short fade-out."""
+# Soft onsets: vowels, nasals, semivowels, sibilants/h, voiced and aspirated stops (low-energy or slow attack).
+# Plain voiceless stops (k c ṭ t p) start with a sharp burst. SLP1 first character of the pāda.
+SOFT_FIRST = set("aAiIuUfFxXeEoO" "NYRnmM" "yrlv" "Szsh" "KGCJWQTDPB" "gjqdb")
+GATE_LEAD, GATE_LEAD_SOFT = 0.07, 0.08   # lead kept before the detected onset (was 0.03)
+
+def _onset(au, soft=False):
+    """Sample index of the speech onset, with thresholds relative to this segment's own level: onset = first run
+    of >= 3 of 4 10 ms windows (5 ms hop) above p95 - 30 dB; walk back while above max(noise floor + 6 dB,
+    p95 - 50 dB) (soft: floor + 4 dB, p95 - 55 dB), stepping over dips of up to 2 windows (soft: 4) so a stop
+    closure inside the first syllable does not end the walk."""
+    win, hop = int(0.010*SR), int(0.005*SR)
+    if len(au) < win + 4*hop: return 0
+    fr = np.lib.stride_tricks.sliding_window_view(np.asarray(au, dtype=np.float64), win)[::hop]
+    db = 20*np.log10(np.sqrt((fr**2).mean(1)) + 1e-9); n = len(db)
+    p95 = float(np.percentile(db, 95)); floor = float(np.percentile(db, 5)); on_thr = p95 - 30.0
+    walk = min(max(floor + (4.0 if soft else 6.0), p95 - (55.0 if soft else 50.0)), on_thr - 6.0)
+    above = db > on_thr
+    s = next((i for i in range(n-3) if above[i] and above[i:i+4].sum() >= 3), int(np.argmax(db)))
+    dip = 4 if soft else 2
+    while s > 0:
+        if db[s-1] > walk: s -= 1; continue
+        k = next((k for k in range(2, dip+2) if s-k >= 0 and db[s-k] > walk), None)
+        if k is None: break
+        s -= k
+    return s*hop
+
+def gate(au, fin=0.008, fout=0.040, lead=None, keep=0.06, fade=True, fric=False, halant=False, soft=None):
+    """Trim F5 padding-silence/edge-artifacts to tight speech bounds (+ click-fades). Onset: relative to the
+    segment's level (see _onset), with a 70 ms lead (80 ms for soft onsets) and a short raised-cosine fade-in that
+    ends before the onset. soft=True (or fric=True, kept for callers) marks a pāda that starts soft (SOFT_FIRST).
+    halant=True (clip ENDS in a pure consonant त्/क्/प्): the final unvoiced stop is a weak burst after a closure,
+    so the standard 0.035 offset detector cuts it -> low trailing floor + more keep + short fade-out. The offset
+    rule is unchanged."""
+    soft = bool(fric) if soft is None else (soft or bool(fric))
+    if lead is None: lead = GATE_LEAD_SOFT if soft else GATE_LEAD
     win = int(0.02*SR); r = [float(np.sqrt((au[i:i+win]**2).mean())) for i in range(0, len(au)-win, win)]; n = len(r)
     if n == 0: return au
-    if fric:
-        FR = 0.006   # fricative floor: catch the quiet ś/ṣ/s onset, not pure silence/noise
-        s = next((i for i in range(n-1) if r[i] > FR and r[i+1] > FR), int(np.argmax(r)))
-        while s > 0 and r[s-1] > FR: s -= 1
-        _vdef = s
-    else:
-        vs = next((i for i in range(n-1) if r[i] > voice and r[i+1] > sil), int(np.argmax(r))); s = vs
-        while s > 0 and r[s-1] > sil: s -= 1
-        _vdef = vs
+    s = _onset(au, soft=soft)
     ve_thr = 0.012 if halant else 0.035            # halant: catch the weak final stop burst after the closure
-    ve = max((i for i in range(n) if r[i] > ve_thr), default=_vdef)
+    ve = max((i for i in range(n) if r[i] > ve_thr), default=s//win)
     keep_s = 0.12 if halant else keep
-    start = max(0, s*win - int(lead*SR))
-    end = min(len(au), ve*win + int(keep_s*SR)); out = au[start:end].copy()
+    start = max(0, s - int(lead*SR))
+    end = min(len(au), max(ve*win + int(keep_s*SR), s + win)); out = np.array(au[start:end], dtype=np.float32)
     if fade:
-        fi = (0 if fric else int(fin*SR)); fo = int((0.018 if halant else fout)*SR)   # no fade-in over fricative; short fade-out on stop
-        if fi and len(out) > fi: out[:fi] *= np.linspace(0, 1, fi)
-        if fo and len(out) > fo: out[-fo:] *= (np.cos(np.linspace(0, np.pi, fo))*0.5 + 0.5)
+        fi = min(int(fin*SR), s - start); fo = int((0.018 if halant else fout)*SR)   # fade-in ends before the onset
+        if fi > 1 and len(out) > fi: out[:fi] *= (0.5 - 0.5*np.cos(np.linspace(0, np.pi, fi))).astype(np.float32)
+        if fo and len(out) > fo: out[-fo:] *= (np.cos(np.linspace(0, np.pi, fo))*0.5 + 0.5).astype(np.float32)
     return out
+
+def soft_onset(pada):
+    """True when the pāda starts with a soft phoneme (SOFT_FIRST), from its SLP1 form."""
+    t = (PT.align_slp1(pada) or "").lstrip(" '|.")
+    return bool(t) and t[0] in SOFT_FIRST
 
 _VIRAMA = "्್"
 def _ends_halant(txt):
@@ -226,11 +253,18 @@ def get_ref(meter):
     return val
 
 _primes = _bank.get("repeat_primes", {})
-def _stitch(segs, GAPS, fric=False, halant=False):
-    if len(segs) == 1: return gate(segs[0], fric=fric, halant=halant)
+def _stitch(segs, GAPS, softs, halant=False):
+    """Gate every segment with its own soft-onset flag and join with GAPS. The lead beyond the old 30 ms comes out
+    of the gap before the segment, so the spacing between pādas (and the total length) stays as before."""
     b = []; last = len(segs) - 1
-    for i, s in enumerate(segs): b += [gate(s, fric=(fric and i == 0), halant=(halant and i == last)), GAPS[i] if i < len(GAPS) else GAPS[-1]]
-    return np.concatenate(b[:-1])
+    for i, s in enumerate(segs):
+        g = gate(s, soft=softs[i], halant=(halant and i == last))
+        if i > 0:
+            gap = GAPS[i-1] if i-1 < len(GAPS) else GAPS[-1]
+            extra = int(((GATE_LEAD_SOFT if softs[i] else GATE_LEAD) - 0.03)*SR)
+            b.append(gap[:max(int(0.15*SR), len(gap) - extra)])
+        b.append(g)
+    return np.concatenate(b)
 
 def render_clip(clip):
     meter = clip["meter"]; seed = int(clip["seed"]); no_sandhi = bool(clip["no_sandhi"])
@@ -288,10 +322,9 @@ def render_clip(clip):
     if a.dump_raw:
         os.makedirs(a.dump_raw, exist_ok=True)
         sf.write(os.path.join(a.dump_raw, clip["id"] + "_raw.wav"), np.concatenate(bseg), SR)
-    _slp = PT.align_slp1(clip["padas"][0])
-    fric = bool(_slp) and _slp[0] in ("S", "z", "s", "h")   # ś/ṣ/s/h onset -> fricative-aware gate
+    softs = [soft_onset(p) for p in clip["padas"]]          # per pāda (was: ś/ṣ/s/h check on the first pāda only)
     halant = _ends_halant(PIECES[-1])                       # त्/क्/प् final -> preserve stop burst
-    final = _stitch(bseg, GAPS, fric=fric, halant=halant)
+    final = _stitch(bseg, GAPS, softs, halant=halant)
     sf.write(out, final, SR)
     return {"id": clip["id"], "dur": round(len(final)/SR, 3), "pieces": len(PIECES), "seed": seed, "out": out}
 
