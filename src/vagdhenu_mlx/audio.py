@@ -46,7 +46,8 @@ def log_mel(wave: np.ndarray) -> np.ndarray:
     idx = np.arange(N_FFT)[None, :] + HOP * np.arange(n_frames)[:, None]
     win = 0.5 - 0.5 * np.cos(2 * np.pi * np.arange(N_FFT) / N_FFT)  # periodic Hann
     spec = np.abs(np.fft.rfft(x[idx] * win, axis=-1))
-    mel = spec @ mel_filterbank()
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):  # spurious on Accelerate/veclib
+        mel = spec @ mel_filterbank()
     return np.log(np.maximum(mel, 1e-5)).astype(np.float32)
 
 

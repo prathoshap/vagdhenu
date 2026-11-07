@@ -45,6 +45,11 @@ class Renderer:
         self.speed, self.nfe, self.cfg = speed, nfe, cfg
         self.gap, self.gap_halant = gap, gap_halant
         self.log = log
+        # Bound MLX's Metal buffer cache: back-to-back renders of different lengths otherwise let it
+        # grow until a 16 GB machine swaps. Override with VAGDHENU_MLX_CACHE_MB (0 = unbounded).
+        cache_mb = int(os.environ.get("VAGDHENU_MLX_CACHE_MB", "512"))
+        if cache_mb > 0:
+            (getattr(mx, "set_cache_limit", None) or mx.metal.set_cache_limit)(cache_mb << 20)
         dit, vocab = load_dit(model_dir, dtype=dtype)
         self.synth = Synth(dit, vocab, dtype=dtype)
         self.vocoder = load_bigvgan(model_dir, dtype=mx.float32)
