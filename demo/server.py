@@ -18,7 +18,11 @@ AUTO  = "__auto__"
 NFE   = int(os.environ.get("VAGDHENU_NFE", "32"))
 
 print(f"[boot] loading model once  voice={VOICE}  nfe={NFE} …", flush=True)
-RENDERER = Renderer(VOICE, VOC, BANK, device="cuda", vocab_file=VOCAB, nfe=NFE)
+if os.environ.get("VAGDHENU_BACKEND") == "mlx":   # Apple silicon: src/vagdhenu_mlx, weights from scripts/setup_mlx.sh
+    from vagdhenu_mlx import Renderer as MLXRenderer
+    RENDERER = MLXRenderer(os.environ.get("VAGDHENU_MLX_MODEL", os.path.join(HERE, "models", "mlx")), BANK, nfe=NFE)
+else:
+    RENDERER = Renderer(VOICE, VOC, BANK, device="cuda", vocab_file=VOCAB, nfe=NFE)
 print("[boot] model warm, ready.", flush=True)
 
 _bank = json.load(open(BANK, encoding="utf-8"))

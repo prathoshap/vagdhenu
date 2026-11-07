@@ -1,0 +1,9 @@
+# Apple-silicon inference (no torch, no CUDA): pip install -r requirements-mlx.txt
+# Python >= 3.10. Convert the weights once with `python -m vagdhenu_mlx.convert` (that step needs torch + safetensors;
+# scripts/setup_mlx.sh does it in a throwaway environment).
+mlx>=0.32
+numpy>=1.26
+soundfile
+pydub
+indic-transliteration
+scipy            # only for resampling user-supplied reference clips that are not 24 kHz

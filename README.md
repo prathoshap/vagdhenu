@@ -29,13 +29,28 @@ scripts/     env setup + weight download
 ```
 
 ## Install & quickstart
-Requires **Python 3.10** and a **CUDA 12.1 GPU**.
+Requires **Python 3.10** and a **CUDA 12.1 GPU** (or Apple silicon: see below).
 ```bash
 bash scripts/setup.sh    # torch+cu121, deps, BigVGAN, and downloads weights -> models/
 # render a Devanagari verse (+ meter) to a chanted wav:
 python src/render.py --shard examples/sample_shard.json --results /tmp/res.json --outdir out
 # -> out/sample_anushtubh.wav
 ```
+### Apple silicon (MLX, no CUDA)
+An MLX backend (`src/vagdhenu_mlx/`) runs the same DiT + BigVGAN pipeline natively on Apple GPUs — no torch at
+runtime. Same text front end, reference bank, post-gate and locked parameters (nfe 64 · cfg 3.0 · speed 0.90).
+```bash
+bash scripts/setup_mlx.sh     # mlx deps, weights -> models/, one-off conversion to models/mlx (safetensors)
+python src/render_mlx.py --text "वसुदेवसुतं देवं कंसचाणूरमर्दनम् । देवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥" --out out.wav
+python src/render_mlx.py --shard examples/sample_shard.json --outdir out
+```
+On an M5 Max a verse renders at **RTF ≈ 0.3** (≈ 2.8 s for a 9.7 s anuṣṭubh, ~3.8 GB peak memory); the pāda(s) of a verse
+are sampled as one batch, the DiT runs in bfloat16 and BigVGAN's anti-aliased activations are a fused Metal kernel.
+The port is verified against the torch reference (`tools/parity_mlx.py`): on MLX's exact CPU path every stage matches
+to ~1e-5; on the GPU the difference is the hardware's reduced-precision fp32 matmul (~1e-3). Unit tests: `pytest tests/`.
+Use it from Python with `from vagdhenu_mlx import Renderer` (same `render_one()` API as `render_core.Renderer`), or
+run the Gradio demo on it with `VAGDHENU_BACKEND=mlx VAGDHENU_MLX_MODEL=models/mlx python demo/server.py`.
+
 The batch renderer takes a shard JSON: `[{"id","meter","padas":[devanagari…],"seed","out"}]`. For one-off single-verse renders see `src/render_production.py`. `CHAMP_ROOT` env overrides the weights dir (default `models/`).
 
 ## Case studies
