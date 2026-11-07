@@ -12,3 +12,5 @@ __pycache__/
 BigVGAN/
 demo/BigVGAN/
 !src/reference_bank/*.wav
+models/mlx/
+.convert-venv/
