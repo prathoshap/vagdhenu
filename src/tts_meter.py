@@ -30,16 +30,16 @@ METERS = [
     # 14-syl
     ('vasantatilaka',      14, ['GGLGLLLGLLGLGG']),
     # 15-syl
-    ('malini',             15, ['LLLLLLGGLGGLGGG']),
+    ('malini',             15, ['LLLLLLGGGLGGLGG']),
     # 17-syl
-    ('shikharini',         17, ['LGGGGGLLLLLGGGGLG']),
+    ('shikharini',         17, ['LGGGGGLLLLLGGLLLG']),
     ('mandakranta',        17, ['GGGGLLLLLGGLGGLGG']),
     ('harini',             17, ['LLLLLGGGGGLGLLGLG']),
-    ('prithvi',            17, ['LGLLLGLGLLLGGLGGL']),
+    ('prithvi',            17, ['LGLLLGLGLLLGLGGLG']),
     # 19-syl
     ('shardulavikridita',  19, ['GGGLLGLGLLLGGGLGGLG']),
     # 21-syl
-    ('sragdhara',          21, ['GGGGLGGGLLLLLLGGLGGLG']),
+    ('sragdhara',          21, ['GGGGLGGLLLLLLGGLGGLGG']),
 ]
 
 ANUSHTUBH_PADA = 8
